@@ -95,7 +95,7 @@ python app.py
 |--------------------------|-------------|
 | QR Code Scan             | 100%        |
 | RFID Scan                | 100%        |
-| Face Recognition (1st try)| 87.5%       |
+| Face Recognition (1st try)| 100%       |
 | 2FA Authentication       | 96%         |
 
 ---
