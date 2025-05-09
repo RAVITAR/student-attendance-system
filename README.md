@@ -8,6 +8,7 @@ A secure, real-time hybrid student attendance system developed as a final year p
 **Mustapha Olayiwola Sanni**  
 BSc (Hons) Information Technology with FY  
 Supervised by **Professor Vladan Velisavljevic**
+University of Bedfordshire
 
 ---
 
