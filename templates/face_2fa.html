@@ -1,0 +1,744 @@
+{% extends "base.html" %}
+{% block title %}Face Recognition Authentication{% endblock %}
+
+{% block extra_head %}
+<style>
+  .face-auth-container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .face-auth-card {
+    border: none;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  }
+  
+  .face-scanner {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    margin: 0 auto;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 5px solid #f8f9fa;
+    box-shadow: 0 0 30px rgba(13, 110, 253, 0.2);
+  }
+  
+  .scanner-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+  
+  .scan-animation {
+    position: absolute;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(90deg, transparent, #0d6efd, transparent);
+    animation: scan 2s ease-in-out infinite;
+    z-index: 2;
+  }
+  
+  @keyframes scan {
+    0%, 100% { top: 0; }
+    50% { top: calc(100% - 5px); }
+  }
+  
+  .face-outline {
+    position: absolute;
+    width: 150px;
+    height: 220px;
+    border: 3px dashed rgba(13, 110, 253, 0.5);
+    border-radius: 100px / 150px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    animation: pulse 2s infinite;
+  }
+  
+  .detection-pulse {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px;
+    height: 200px;
+    background-color: rgba(13, 110, 253, 0.3);
+    border-radius: 50%;
+    opacity: 0;
+    z-index: 1;
+  }
+  
+  .pulse-animation {
+    animation: pulse-detect 1s ease-out infinite;
+  }
+  
+  @keyframes pulse-detect {
+    0% { 
+      transform: translate(-50%, -50%) scale(0.9);
+      opacity: 0.7;
+    }
+    100% { 
+      transform: translate(-50%, -50%) scale(1.5);
+      opacity: 0;
+    }
+  }
+  
+  .instructions-box {
+    background-color: rgba(248, 249, 250, 0.9);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #0d6efd;
+  }
+  
+  .status-indicator {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+  }
+  
+  .status-connecting {
+    background-color: #ffc107;
+    animation: blink 1s infinite;
+  }
+  
+  .status-scanning {
+    background-color: #0dcaf0;
+    animation: blink 1s infinite;
+  }
+  
+  .status-success {
+    background-color: #198754;
+  }
+  
+  .status-error {
+    background-color: #dc3545;
+  }
+  
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  
+  .progress-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #0d6efd;
+    font-weight: bold;
+    z-index: 10;
+  }
+  
+  .circular-progress {
+    position: relative;
+    width: 120px;
+    height: 120px;
+  }
+  
+  .circular-progress svg {
+    transform: rotate(-90deg);
+  }
+  
+  .circular-progress circle {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+  }
+  
+  .circular-progress .bg {
+    stroke: #e9ecef;
+  }
+  
+  .circular-progress .progress {
+    stroke: #0d6efd;
+    stroke-dasharray: 314;
+    stroke-dashoffset: 314;
+    transition: stroke-dashoffset 1s linear;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="face-auth-container animate-fade-in">
+    <div class="face-auth-card">
+      <!-- Card Header -->
+      <div class="card-header text-center py-4 bg-primary text-white">
+        <h2 class="fw-bold mb-0">
+          <i class="bi bi-camera-video-fill me-2"></i>Face Recognition
+        </h2>
+        <p class="mb-0 mt-2">Verifying your identity with facial recognition</p>
+      </div>
+      
+      <!-- Card Body -->
+      <div class="card-body p-4">
+        <!-- Instructions Box -->
+        <div class="instructions-box mb-4">
+          <h5 class="mb-3">
+            <i class="bi bi-info-circle-fill text-primary me-2"></i>Instructions
+          </h5>
+          <ol class="mb-0">
+            <li>Position your face within the circle</li>
+            <li>Ensure good lighting on your face</li>
+            <li>Remove glasses or face coverings</li>
+            <li>Hold still while we verify your identity</li>
+          </ol>
+        </div>
+        
+        <!-- Status Indicator -->
+        <div class="text-center mb-4" id="statusContainer">
+          <span class="d-inline-flex align-items-center mb-2 px-3 py-2 rounded-pill bg-light">
+            <span class="status-indicator status-connecting" id="statusIndicator"></span>
+            <span id="statusText">Connecting to camera...</span>
+          </span>
+        </div>
+        
+        <!-- Face Scanner -->
+        <div class="face-scanner mb-4">
+          <!-- Detection Animation -->
+          <div class="detection-pulse" id="detectionPulse"></div>
+          
+          <!-- Scan Animation -->
+          <div class="scan-animation"></div>
+          
+          <!-- Face Outline -->
+          <div class="face-outline"></div>
+          
+          <!-- Progress Overlay (initially hidden) -->
+          <div class="scanner-overlay" id="progressOverlay" style="display: none;">
+            <div class="circular-progress">
+              <div class="progress-label">0%</div>
+              <svg width="120" height="120" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="50" class="bg" />
+                <circle cx="60" cy="60" r="50" class="progress" id="progressCircle" />
+              </svg>
+            </div>
+          </div>
+          
+          <!-- Error Overlay (initially hidden) -->
+          <div class="scanner-overlay bg-dark bg-opacity-75 text-center p-4" id="errorOverlay" style="display: none;">
+            <div>
+              <i class="bi bi-exclamation-triangle-fill text-warning fs-1 mb-3 d-block"></i>
+              <h5 class="text-white">Face Detection Failed</h5>
+              <p class="text-white-50 mb-3" id="errorMessage">Unable to verify identity.</p>
+              <button type="button" class="btn btn-outline-light" id="retryButton">
+                <i class="bi bi-arrow-repeat me-2"></i>Try Again
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Progress Message -->
+        <div class="text-center mb-4">
+          <p class="text-muted" id="progressMessage">Initializing face verification...</p>
+        </div>
+        
+        <!-- CSRF Token Storage -->
+        <form id="face2FAForm" method="post" action="{{ url_for('student_bp.do_face_2fa') }}" style="display:none;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        </form>
+        
+        <!-- Action Buttons -->
+        <div class="d-grid gap-2">
+          <button type="button" class="btn btn-primary mb-2" id="verifyButton">
+            <i class="bi bi-person-check me-2"></i>Verify Identity
+          </button>
+          <button type="button" class="btn btn-outline-danger" id="cancelButton">
+            <i class="bi bi-x-circle me-2"></i>Cancel Verification
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // DOM Elements
+  const statusIndicator = document.getElementById('statusIndicator');
+  const statusText = document.getElementById('statusText');
+  const progressOverlay = document.getElementById('progressOverlay');
+  const progressCircle = document.getElementById('progressCircle');
+  const progressLabel = document.querySelector('.progress-label');
+  const progressMessage = document.getElementById('progressMessage');
+  const errorOverlay = document.getElementById('errorOverlay');
+  const errorMessage = document.getElementById('errorMessage');
+  const retryButton = document.getElementById('retryButton');
+  const cancelButton = document.getElementById('cancelButton');
+  const verifyButton = document.getElementById('verifyButton');
+  const detectionPulse = document.getElementById('detectionPulse');
+  const face2FAForm = document.getElementById('face2FAForm');
+  
+  // Variables
+  let verificationProgress = 0;
+  let progressInterval;
+  let maxVerificationTime = 20; // seconds
+  
+  // Initialize the verification process
+  function initializeVerification() {
+    // Reset previous states
+    clearInterval(progressInterval);
+    verificationProgress = 0;
+    detectionPulse.classList.remove('pulse-animation');
+    progressOverlay.style.display = 'none';
+    errorOverlay.style.display = 'none';
+    
+    // Update status
+    updateStatus('connecting');
+    
+    // Simulate camera connection (in real app, this would connect to the camera)
+    setTimeout(() => {
+      // Update status to scanning
+      updateStatus('scanning');
+      
+      // Show pulsing detection animation
+      detectionPulse.classList.add('pulse-animation');
+    }, 1500);
+  }
+  
+  // Start the facial verification process
+  function startVerification() {
+  // Disable verification button to prevent multiple submissions
+  verifyButton.disabled = true;
+  verifyButton.innerHTML = `
+    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+    Verifying Identity...
+  `;
+
+  // Reset UI elements
+  hideElement(errorOverlay);
+  progressOverlay.style.display = 'flex';
+  progressMessage.textContent = "Initializing face verification...";
+
+  // Enhanced logging and monitoring
+  const startTime = Date.now();
+  let networkLatency = 0;
+  let processingTime = 0;
+
+  // Comprehensive error logging function
+  function logVerificationError(errorType, errorMessage, additionalContext = {}) {
+    const errorLog = {
+      type: errorType,
+      message: errorMessage,
+      timestamp: new Date().toISOString(),
+      startTime: startTime,
+      ...additionalContext
+    };
+
+    // Send error to backend for logging (optional)
+    fetch('/log-verification-error', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken
+      },
+      body: JSON.stringify(errorLog)
+    }).catch(console.error);
+
+    console.error('Verification Error:', errorLog);
+    return errorLog;
+  }
+
+  // Get CSRF token from hidden form with fallback
+  const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+  if (!csrfToken) {
+    const errorLog = logVerificationError('CSRF_ERROR', 'CSRF token missing');
+    return showError('Authentication error. Please refresh the page.');
+  }
+
+  // Abort controller for request cancellation
+  const controller = new AbortController();
+  const signal = controller.signal;
+
+  // Set timeout for entire verification process
+  const verificationTimeout = setTimeout(() => {
+    controller.abort();
+    logVerificationError('TIMEOUT_ERROR', 'Verification process timed out');
+    showError('Verification timed out. Please try again.');
+  }, 30000); // 30 seconds total timeout
+
+  // Simulated progressive loading
+  let progress = 0;
+  const progressInterval = setInterval(() => {
+    progress = Math.min(progress + (Math.random() * 5), 90);
+    updateProgress(progress);
+
+    // Update progress message dynamically
+    const progressStages = [
+      "Detecting facial features...",
+      "Analyzing face patterns...",
+      "Matching with profile...",
+      "Verifying identity...",
+      "Almost there..."
+    ];
+    progressMessage.textContent = progressStages[Math.floor(progress / 20)] || progressStages[progressStages.length - 1];
+  }, 500);
+
+  // Main verification fetch
+  fetch("{{ url_for('student_bp.do_face_2fa_json') }}", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": csrfToken,
+      "X-Requested-With": "XMLHttpRequest"
+    },
+    credentials: 'same-origin',
+    body: JSON.stringify({
+      client_timestamp: Date.now(),
+      screen_resolution: `${window.screen.width}x${window.screen.height}`,
+      user_agent: navigator.userAgent
+    }),
+    signal: signal
+  })
+  .then(response => {
+    networkLatency = Date.now() - startTime;
+    
+    if (!response.ok) {
+      // Detailed error handling based on status
+      const statusErrorMap = {
+        400: 'Bad Request: Invalid authentication data',
+        401: 'Unauthorized: Please log in again',
+        403: 'Forbidden: Access denied',
+        500: 'Server Error: Please try again later',
+        503: 'Service Unavailable: System overloaded'
+      };
+      
+      const errorMessage = statusErrorMap[response.status] || `Network error: ${response.status}`;
+      throw new Error(errorMessage);
+    }
+    return response.json();
+  })
+  .then(data => {
+    processingTime = Date.now() - startTime - networkLatency;
+    
+    // Clear intervals and timeouts
+    clearInterval(progressInterval);
+    clearTimeout(verificationTimeout);
+    
+    // Comprehensive success handling
+    if (data.status === "ok") {
+      updateStatus('success');
+      updateProgress(100);
+      progressMessage.textContent = "Identity confirmed! Redirecting...";
+      
+      // Optional: Send verification success log
+      fetch('/log-verification-success', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({
+          networkLatency,
+          processingTime,
+          redirectUrl: data.redirect
+        })
+      }).catch(console.error);
+      
+      // Delayed redirect with visual feedback
+      setTimeout(() => {
+        window.location.href = data.redirect || "{{ url_for('student_bp.login_success') }}";
+      }, 1500);
+    } else {
+      // Detailed error handling
+      const errorDetails = {
+        'NO_FACE_DETECTED': 'No face detected. Ensure good lighting and clear view.',
+        'FACE_MISMATCH': 'Face does not match registered profile.',
+        'LOW_CONFIDENCE': 'Unable to confidently verify identity.',
+        'SYSTEM_ERROR': 'Internal system error occurred.'
+      };
+      
+      const errorMessage = errorDetails[data.error_type] || 
+        data.message || 
+        "Face verification failed. Please try again.";
+      
+      showError(errorMessage);
+      
+      // Log specific error type
+      logVerificationError('VERIFICATION_FAILED', errorMessage, {
+        errorType: data.error_type,
+        additionalDetails: data
+      });
+    }
+  })
+  .catch(error => {
+    // Clear intervals and timeouts
+    clearInterval(progressInterval);
+    clearTimeout(verificationTimeout);
+    
+    // Differentiate between different types of errors
+    if (error.name === 'AbortError') {
+      showError('Verification process timed out. Please try again.');
+    } else if (error.name === 'TypeError') {
+      showError('Network connection issue. Please check your internet.');
+    } else {
+      showError(error.message || 'Technical error during verification.');
+    }
+
+
+// Log the error
+    logVerificationError('UNEXPECTED_ERROR', error.message, {
+      errorName: error.name,
+      errorStack: error.stack
+    });
+  })
+  .finally(() => {
+    // Always reset button state
+    verifyButton.disabled = false;
+    verifyButton.innerHTML = `
+      <i class="bi bi-person-check me-2"></i>Verify Identity
+    `;
+  });
+}
+
+// Advanced progress tracking
+function updateProgress(percent) {
+  const progressCircle = document.getElementById('progressCircle');
+  const progressLabel = document.querySelector('.progress-label');
+  const circumference = 2 * Math.PI * 50;
+  const offset = circumference - (percent / 100) * circumference;
+  
+  // Smooth progress animation
+  progressCircle.style.transition = 'stroke-dashoffset 0.5s ease-in-out';
+  progressCircle.style.strokeDasharray = `${circumference}`;
+  progressCircle.style.strokeDashoffset = offset;
+  
+  // Update percentage label
+  progressLabel.textContent = `${Math.min(Math.round(percent), 100)}%`;
+  
+  // Color-coded progress
+  if (percent < 30) {
+    progressCircle.style.stroke = '#dc3545';  // Red for early stages
+  } else if (percent < 60) {
+    progressCircle.style.stroke = '#ffc107';  // Yellow for mid-progress
+  } else {
+    progressCircle.style.stroke = '#28a745';  // Green for final stages
+  }
+}
+
+// Enhanced status update function
+function updateStatus(status) {
+  const statusIndicator = document.getElementById('statusIndicator');
+  const statusText = document.getElementById('statusText');
+  
+  // Remove all existing status classes
+  const statusClasses = [
+    'status-connecting', 
+    'status-scanning', 
+    'status-success', 
+    'status-error'
+  ];
+  statusIndicator.classList.remove(...statusClasses);
+  
+  // Add appropriate status
+  const statusConfigs = {
+    'connecting': {
+      class: 'status-connecting',
+      text: "Connecting to verification system...",
+      icon: 'bi-signal'
+    },
+    'scanning': {
+      class: 'status-scanning',
+      text: "Scanning and processing...",
+      icon: 'bi-camera-video'
+    },
+    'success': {
+      class: 'status-success',
+      text: "Identity verified successfully!",
+      icon: 'bi-check-circle-fill'
+    },
+    'error': {
+      class: 'status-error',
+      text: "Verification failed",
+      icon: 'bi-x-circle-fill'
+    }
+  };
+  
+  const config = statusConfigs[status] || statusConfigs['error'];
+  statusIndicator.classList.add(config.class);
+  statusText.textContent = config.text;
+  
+  // Optional: Add sound feedback
+  try {
+    const audio = new Audio(
+      'data:audio/wav;base64,UklGRigCAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhxAEAAP' + 
+      'ADAACAAAAAsAEAAAEAAAD/////BAAAAAAAAAD4/wAA6P8AAOL/AADa/wAA0v8AAML/AADG/wAAxP8AAML/AADD/wAA' + 
+      'xP8AAMX/AADG/wAAxv8AAML/AADD/wAAxP8AAML/AADG/wAAxf8AAML/AADD/wAAxP8AAML/AADG/wAAxf8AAML/' + 
+      'AADD/wAAxP8AAML/AADG/wAAxf8AAML/AADD/wAAxP8AAML/AADG/wAAxf8AAML/AADD/wAAxP8AAML/AADG/wAA' + 
+      'xf8AAML/AADD/wAAxP8AAML/AADG/wAAxf8AAML/AADD/wAAxP8AAML/AADG/wAAxf8AAML/AADD/wAAxP8AAML/' + 
+      'AADG/wAAxf8AAML/AADD/wAAxP8AAML/AADG/wAAxf8AAML/AADD/wAAxP8AAML/AADG/wAAxf8AAML/AADD/wAA' + 
+      'xP8AAML/AADG/wAAxf8AAML/AADD/wAAxP8AAML/AADG/wAAxf8AAML/AADD/wAAxP8AAML/AADG/wAAxf8AAML/' + 
+      'AADD/wAAxP8AAML/AADG/wAAxf8AAML/AADD/wAAxP8AAML/AADG/wAAxf8AAML/AADD/wAAxP8AAML/AADG/wAA' + 
+      'xf8AAML/AADD/wAAxP8AAML/AADG/wAAxf8AAML/AADD/wAAxP8AAML/AADG/wAAxf8AAML/AADD/wAAxP8AAML/' + 
+      'AADG/wAAxf8AAML/AADD/wAAxP8AAML/AADG/wAAxf8AAML/AADD/wAAxP8AAML/AADG/wAAxf8AAML/AADD/wAA' + 
+      'xP8AAML/AADG/wAAxf8AAML/'
+    );
+    audio.play().catch(e => console.log('Audio playback failed'));
+  } catch (e) {
+    console.log('Sound feedback failed');
+  }
+}
+
+// Advanced error handling function
+function showError(message) {
+  updateStatus('error');
+  
+  // Detailed error overlay
+  const errorOverlay = document.getElementById('errorOverlay');
+  const errorMessage = document.getElementById('errorMessage');
+  const retryButton = document.getElementById('retryButton');
+  
+  // Customize error message
+  errorMessage.textContent = message;
+  
+  // Retry button configuration
+  retryButton.onclick = () => {
+    // Hide error overlay
+    errorOverlay.style.display = 'none';
+    
+    // Trigger verification again
+    startVerification();
+  };
+  
+  // Hide progress overlay, show error
+  progressOverlay.style.display = 'none';
+  errorOverlay.style.display = 'flex';
+  
+  // Optional: Vibrate device for error feedback
+  try {
+    if ('vibrate' in navigator) {
+      navigator.vibrate([200, 100, 200]);
+    }
+  } catch (e) {
+    console.log('Vibration not supported');
+  }
+}
+
+// Utility function to hide elements
+function hideElement(element) {
+  if (element) {
+    element.style.display = 'none';
+  }
+}
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+  // Attach verification trigger
+  const verifyButton = document.getElementById('verifyButton');
+  if (verifyButton) {
+    verifyButton.addEventListener('click', startVerification);
+  }
+  
+  // Cancel button handler
+  const cancelButton = document.getElementById('cancelButton');
+  if (cancelButton) {
+    cancelButton.addEventListener('click', () => {
+      if (confirm('Are you sure you want to cancel verification?')) {
+        window.location.href = "{{ url_for('student_bp.student') }}";
+      }
+    });
+  }
+  
+  // Retry button handler (in error overlay)
+  const retryButton = document.getElementById('retryButton');
+  if (retryButton) {
+    retryButton.addEventListener('click', () => {
+      // Hide error overlay and restart verification
+      errorOverlay.style.display = 'none';
+      startVerification();
+    });
+  }
+});
+  
+  // Update progress UI
+  function updateProgress(percent) {
+    // Update circle progress
+    const circumference = 2 * Math.PI * 50;
+    const offset = circumference - (percent / 100) * circumference;
+    progressCircle.style.strokeDashoffset = offset;
+    
+    // Update label
+    progressLabel.textContent = `${Math.min(Math.round(percent), 100)}%`;
+    
+    // Update message based on progress
+    if (percent < 25) {
+      progressMessage.textContent = "Detecting facial features...";
+    } else if (percent < 50) {
+      progressMessage.textContent = "Analyzing face patterns...";
+    } else if (percent < 75) {
+      progressMessage.textContent = "Matching with profile...";
+    } else {
+      progressMessage.textContent = "Finalizing verification...";
+    }
+  }
+  
+  // Update status indicator
+  function updateStatus(status) {
+    // Remove all status classes
+    statusIndicator.classList.remove('status-connecting', 'status-scanning', 'status-success', 'status-error');
+    
+    // Add appropriate class and text based on status
+    switch(status) {
+      case 'connecting':
+        statusIndicator.classList.add('status-connecting');
+        statusText.textContent = "Connecting to camera...";
+        break;
+      case 'scanning':
+        statusIndicator.classList.add('status-scanning');
+        statusText.textContent = "Scanning for face...";
+        break;
+      case 'success':
+        statusIndicator.classList.add('status-success');
+        statusText.textContent = "Identity verified!";
+        break;
+      case 'error':
+        statusIndicator.classList.add('status-error');
+        statusText.textContent = "Verification failed";
+        break;
+    }
+  }
+  
+  // Show error overlay
+  function showError(message) {
+    updateStatus('error');
+    errorMessage.textContent = message;
+    progressOverlay.style.display = 'none';
+    errorOverlay.style.display = 'flex';
+    detectionPulse.classList.remove('pulse-animation');
+  }
+  
+  // Event Listeners
+  verifyButton.addEventListener('click', () => {
+    startVerification();
+  });
+  
+  retryButton.addEventListener('click', () => {
+    initializeVerification();
+  });
+  
+  cancelButton.addEventListener('click', () => {
+    if (confirm("Are you sure you want to cancel the verification process?")) {
+      window.location.href = "{{ url_for('student_bp.student') }}";
+    }
+  });
+  
+  // Initialize on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    initializeVerification();
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Enroll Face (Browser) - {{ student_id }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-8 offset-md-2 text-center">
+    <h2 class="my-4 fw-bold">Browser-Based Face Enrollment for {{ student_id }}</h2>
+    <p class="text-secondary">
+      This page will use your device camera to capture and upload a face image for enrollment.
+      <br><small class="text-muted">For best results, ensure good lighting and face is centered.</small>
+    </p>
+
+    <!-- Video Preview -->
+    <div class="mb-3">
+      <video id="video" width="320" height="240" autoplay class="border rounded shadow"></video>
+    </div>
+    <!-- Canvas (hidden) to capture frames -->
+    <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+
+    <!-- Capture & Upload Form -->
+    <form id="enrollForm" method="POST" action="{{ url_for('staff_bp.browser_enroll_face', student_id=student_id) }}">
+      <!-- Hidden input to store base64 data -->
+      <input type="hidden" name="captured_image" id="captured_image" />
+      <button type="button" id="captureBtn" class="btn btn-success me-3">
+        <i class="bi bi-camera-fill"></i> Capture
+      </button>
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-upload"></i> Upload
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  const captureBtn = document.getElementById('captureBtn');
+  const capturedImageInput = document.getElementById('captured_image');
+
+  // Request camera
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+      video.srcObject = stream;
+      video.play();
+    })
+    .catch(err => {
+      console.error("Error accessing webcam:", err);
+      alert("Unable to access camera. Please allow permissions or use a supported browser.");
+    });
+
+  // Capture frame
+  captureBtn.addEventListener('click', () => {
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataURL = canvas.toDataURL('image/png');
+    capturedImageInput.value = dataURL;
+    alert("Image captured! Click 'Upload' to send to the server.");
+  });
+</script>
+{% endblock %}

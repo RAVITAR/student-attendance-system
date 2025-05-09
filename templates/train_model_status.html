@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% block title %}Training Model{% endblock %}
+
+{% block extra_head %}
+<style>
+  .training-container {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .training-card {
+    border: none;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  }
+
+  .training-animation {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 2rem;
+  }
+
+  .neuron {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background-color: #0d6efd;
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(13, 110, 253, 0.5);
+  }
+
+  .neuron-1 { top: 40px; left: 40px; animation: pulse 1.5s infinite alternate; }
+  .neuron-2 { top: 70px; left: 100px; animation: pulse 1.8s infinite alternate 0.3s; }
+  .neuron-3 { top: 140px; left: 60px; animation: pulse 1.6s infinite alternate 0.6s; }
+  .neuron-4 { top: 30px; left: 160px; animation: pulse 1.7s infinite alternate 0.2s; }
+  .neuron-5 { top: 160px; left: 140px; animation: pulse 1.9s infinite alternate 0.5s; }
+
+  .connection {
+    position: absolute;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(13, 110, 253, 0.2), rgba(13, 110, 253, 0.8), rgba(13, 110, 253, 0.2));
+    transform-origin: 0 0;
+    z-index: -1;
+  }
+
+  .connection-1-2 { top: 50px; left: 50px; width: 60px; transform: rotate(30deg); animation: flash 1.5s infinite alternate; }
+  .connection-2-3 { top: 80px; left: 110px; width: 80px; transform: rotate(135deg); animation: flash 1.7s infinite alternate 0.3s; }
+  .connection-3-4 { top: 140px; left: 70px; width: 100px; transform: rotate(-60deg); animation: flash 1.6s infinite alternate 0.6s; }
+  .connection-4-5 { top: 40px; left: 170px; width: 130px; transform: rotate(110deg); animation: flash 1.8s infinite alternate 0.4s; }
+  .connection-5-1 { top: 160px; left: 150px; width: 110px; transform: rotate(-125deg); animation: flash 1.9s infinite alternate 0.2s; }
+
+  @keyframes pulse {
+    0% { transform: scale(0.8); opacity: 0.5; }
+    100% { transform: scale(1.2); opacity: 1; }
+  }
+
+  @keyframes flash {
+    0% { opacity: 0.2; }
+    100% { opacity: 0.8; }
+  }
+
+  .progress-container {
+    height: 10px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, #ffc107, #fd7e14);
+    transition: width 0.6s ease-in-out;
+  }
+
+  .training-phase {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    border-left: 4px solid transparent;
+    background-color: #f8f9fa;
+    transition: background-color 0.4s, border-color 0.4s;
+  }
+
+  .phase-active {
+    background-color: rgba(13, 110, 253, 0.1);
+    border-left-color: #0d6efd;
+  }
+
+  .phase-completed {
+    border-left-color: #198754;
+    background-color: #e6ffee;
+  }
+
+  #status-message {
+    margin-top: 1rem;
+    font-weight: 500;
+    text-align: center;
+  }
+</style>
+<script>
+  async function pollTrainingStatus() {
+    try {
+      const res = await fetch("/train_model_status");
+      if (!res.ok) throw new Error("Failed to fetch");
+      const data = await res.json();
+
+      document.querySelector(".progress-bar").style.width = `${data.percent}%`;
+      document.getElementById("status-message").innerText = data.message || "";
+
+      for (let i = 1; i <= 4; i++) {
+        const phase = document.getElementById(`phase${i}`);
+        const spinner = document.getElementById(`spinner${i}`);
+        const icon = document.getElementById(`icon${i}`);
+        phase.classList.remove("phase-active", "phase-completed");
+
+        if (i < data.phase) {
+          phase.classList.add("phase-completed");
+          if (spinner) spinner.classList.add("d-none");
+          if (icon) icon.classList.remove("d-none");
+        } else if (i === data.phase) {
+          phase.classList.add("phase-active");
+          if (spinner) spinner.classList.remove("d-none");
+          if (icon) icon.classList.add("d-none");
+        } else {
+          if (spinner) spinner.classList.add("d-none");
+          if (icon) icon.classList.remove("d-none");
+        }
+      }
+
+      if (!data.done) {
+        setTimeout(pollTrainingStatus, 1000);
+      } else {
+        setTimeout(() => window.location.href = "/admin_panel", 3000);
+      }
+    } catch (err) {
+      document.getElementById("status-message").innerText = "⚠️ Error retrieving training status.";
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", pollTrainingStatus);
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5 animate-fade-in">
+  <div class="training-container">
+    <div class="training-card">
+      <div class="card-header text-center py-4 bg-warning text-dark">
+        <h2 class="fw-bold mb-0"><i class="bi bi-cpu me-2"></i>Model Training</h2>
+        <p class="mb-0 mt-2">Training the facial recognition model with all student images</p>
+      </div>
+
+      <div class="card-body p-4 text-center">
+        <div class="training-animation">
+          <div class="neuron neuron-1"></div>
+          <div class="neuron neuron-2"></div>
+          <div class="neuron neuron-3"></div>
+          <div class="neuron neuron-4"></div>
+          <div class="neuron neuron-5"></div>
+          <div class="connection connection-1-2"></div>
+          <div class="connection connection-2-3"></div>
+          <div class="connection connection-3-4"></div>
+          <div class="connection connection-4-5"></div>
+          <div class="connection connection-5-1"></div>
+        </div>
+
+        <div class="progress-container">
+          <div class="progress-bar"></div>
+        </div>
+
+        <h4 class="mb-4 fw-bold">Training in Progress</h4>
+
+        <div class="text-start mb-3">
+          {% for i in range(1,5) %}
+          <div class="training-phase" id="phase{{ i }}">
+            <div class="d-flex align-items-center">
+              <div class="me-3">
+                <div class="spinner-border spinner-border-sm text-primary" id="spinner{{ i }}"></div>
+                <i class="bi bi-hourglass d-none" id="icon{{ i }}"></i>
+              </div>
+              <div>
+                <h6 class="mb-0 fw-bold">
+                  {% if i == 1 %} Loading Dataset
+                  {% elif i == 2 %} Feature Extraction
+                  {% elif i == 3 %} Model Training
+                  {% elif i == 4 %} Evaluation
+                  {% endif %}
+                </h6>
+                <small class="text-muted">
+                  {% if i == 1 %} Reading and preparing student images
+                  {% elif i == 2 %} Processing facial features and embeddings
+                  {% elif i == 3 %} Training recognition algorithm with extracted features
+                  {% elif i == 4 %} Assessing trained model performance
+                  {% endif %}
+                </small>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div id="status-message" class="text-primary" role="status" aria-live="polite">Starting...</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

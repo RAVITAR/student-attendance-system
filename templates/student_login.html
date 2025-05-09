@@ -1,0 +1,825 @@
+{% extends "base.html" %}
+{% block title %}Student Authentication - Attendance System{% endblock %}
+
+{% block content %}
+<div class="container auth-container animate-fade-in my-4">
+  <div class="card auth-card shadow">
+    <!-- Header -->
+    <div class="card-header auth-header">
+      <div class="text-center">
+        <h2 class="fw-bold mb-2"><i class="bi bi-shield-lock me-2"></i>Student Authentication</h2>
+        <p class="mb-0">Use your preferred method to authenticate for attendance</p>
+      </div>
+    </div>
+    
+    <div class="card-body auth-body">
+      <!-- Authentication Method Selector -->
+      <div class="auth-method-selector row g-3 mb-4">
+        <div class="col-md-6">
+          <div id="qrMethodOption" class="auth-method-option text-center active p-4" onclick="selectMethod('QR')">
+            <i class="bi bi-qr-code fs-1 d-block mb-3 text-primary"></i>
+            <h5 class="fw-bold mb-2">QR Code</h5>
+            <p class="text-muted mb-0 small">Scan your personal QR code using the camera</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div id="rfidMethodOption" class="auth-method-option text-center p-4" onclick="selectMethod('RFID')">
+            <i class="bi bi-credit-card-2-front fs-1 d-block mb-3 text-primary"></i>
+            <h5 class="fw-bold mb-2">RFID Card</h5>
+            <p class="text-muted mb-0 small">Enter your RFID card number</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Authentication Form -->
+      <form id="loginForm" method="post" action="{{ url_for('student_bp.student_auth') }}">
+        <!-- Hidden input for CSRF protection -->
+
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        
+        <!-- Hidden input to track selected method -->
+        <input type="hidden" id="method" name="method" value="QR">
+        
+        <!-- Hidden input for QR data -->
+        <input type="hidden" id="qr_data" name="qr_data">
+
+        <!-- QR Code Authentication Container -->
+        <div id="qrContainer" class="mb-4">
+          <!-- Camera Controls Panel -->
+          <div class="card bg-light mb-3">
+            <div class="card-body p-3">
+              <div class="row align-items-center">
+                <div class="col-md-6">
+                  <label for="cameraSelect" class="form-label mb-0 fw-medium">
+                    <i class="bi bi-camera me-2"></i>Select Camera:
+                  </label>
+                </div>
+                <div class="col-md-6">
+                  <select id="cameraSelect" class="form-select form-select-sm">
+                    <option value="">Loading cameras...</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- QR Scanner -->
+          <div class="qr-scanner-container mb-4">
+            <!-- Status indicators -->
+            <div class="position-absolute top-0 start-0 m-3 z-index-1">
+              <span id="scanStatus" class="badge bg-primary d-flex align-items-center">
+                <span class="spinner-grow spinner-grow-sm me-2" role="status"></span>
+                Scanning...
+              </span>
+            </div>
+
+            <!-- Camera Preview -->
+            <div class="position-relative">
+              <video id="preview" class="w-100 rounded"></video>
+              
+              <!-- Scanner Overlay with animated corners -->
+              <div class="scanner-overlay">
+                <div class="scan-region">
+                  <div class="scanner-corners corner-top-left"></div>
+                  <div class="scanner-corners corner-top-right"></div>
+                  <div class="scanner-corners corner-bottom-left"></div>
+                  <div class="scanner-corners corner-bottom-right"></div>
+                </div>
+              </div>
+
+              <!-- Scanner animation line -->
+              <div class="scan-line"></div>
+
+              <!-- Loading Overlay -->
+              <div id="loader" class="scanner-overlay bg-dark bg-opacity-75 d-none">
+                <div class="text-white text-center">
+                  <div class="spinner-border text-primary mb-2" role="status"></div>
+                  <p class="mb-0">Connecting to camera...</p>
+                </div>
+              </div>
+
+              <!-- Camera Error Overlay -->
+              <div id="cameraError" class="scanner-overlay bg-dark bg-opacity-75 d-none text-white text-center">
+                <div>
+                  <i class="bi bi-exclamation-triangle-fill text-warning fs-1 mb-3 d-block"></i>
+                  <h5 class="mb-3">Camera Access Error</h5>
+                  <p class="mb-3">Unable to access your camera. Please ensure you've given permission.</p>
+                  <button onclick="retryCamera()" class="btn btn-light">
+                    <i class="bi bi-arrow-repeat me-2"></i>Try Again
+                  </button>
+                </div>
+              </div>
+
+              <!-- QR Detection Success Overlay -->
+              <div id="qrSuccess" class="scanner-overlay bg-success bg-opacity-75 d-none">
+                <div class="text-white text-center">
+                  <i class="bi bi-check-circle-fill fs-1 mb-3 d-block"></i>
+                  <h5 class="mb-2">QR Code Detected!</h5>
+                  <p class="mb-0">Processing authentication...</p>
+                </div>
+              </div>
+
+              <!-- Countdown Overlay -->
+              <div id="countdownOverlay" class="countdown-overlay d-none">
+                <div>
+                  <p class="mb-2 fs-6 text-white-50">Auto-submitting in</p>
+                  <div id="countdownTimer" class="display-4 fw-bold">3</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Scan Instructions -->
+          <div class="card border-primary border-start border-4 bg-primary bg-opacity-10 mb-3">
+            <div class="card-body p-3">
+              <h6 class="fw-bold mb-2"><i class="bi bi-info-circle-fill me-2"></i>Scanning Instructions</h6>
+              <ul class="mb-0 ps-3 small">
+                <li>Position your QR code within the scanning area</li>
+                <li>Hold steady and ensure good lighting</li>
+                <li>QR code will be detected automatically</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Auto-submit toggle -->
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="autoSubmitToggle" checked>
+            <label class="form-check-label" for="autoSubmitToggle">
+              Auto-submit after QR detection
+            </label>
+          </div>
+
+          <!-- Manual submission button -->
+          <button id="qrSubmitBtn" type="submit" class="btn btn-primary w-100" disabled>
+            <i class="bi bi-shield-lock me-2"></i>Authenticate with QR Code
+          </button>
+        </div>
+
+        <!-- RFID Authentication Container -->
+        <div id="rfidContainer" class="d-none">
+          <div class="text-center mb-4">
+            <img src="https://cdn-icons-png.flaticon.com/512/268/268808.png" alt="RFID Card" width="150" class="img-fluid mb-3">
+            <h5 class="fw-bold">RFID Card Authentication</h5>
+            <p class="text-muted">Enter your RFID card number below</p>
+          </div>
+          
+          <div class="rfid-input-group mb-4">
+            <div class="form-floating mb-3">
+              <input type="text" id="rfid_input" name="rfid_input" class="form-control form-control-lg" placeholder="Scan RFID Card" required>
+              <label for="rfid_input">RFID Card Number</label>
+              <i class="bi bi-credit-card-2-front rfid-icon"></i>
+            </div>
+            
+            <div class="form-text mb-3">
+              <i class="bi bi-info-circle me-1"></i>
+              Enter the number printed on your RFID card or scan using a card reader
+            </div>
+          </div>
+          
+          <button type="submit" class="btn btn-primary btn-lg w-100">
+            <i class="bi bi-shield-lock me-2"></i>Authenticate with RFID
+          </button>
+        </div>
+      </form>
+
+      <!-- Help section -->
+      <div class="mt-4 pt-3 border-top">
+        <div class="accordion" id="helpAccordion">
+          <div class="accordion-item border-0">
+            <h2 class="accordion-header" id="headingHelp">
+              <button class="accordion-button collapsed bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHelp" aria-expanded="false" aria-controls="collapseHelp">
+                <i class="bi bi-question-circle me-2"></i>Need Help?
+              </button>
+            </h2>
+            <div id="collapseHelp" class="accordion-collapse collapse" aria-labelledby="headingHelp" data-bs-parent="#helpAccordion">
+              <div class="accordion-body">
+                <div class="row g-4">
+                  <div class="col-md-6">
+                    <h6 class="fw-bold"><i class="bi bi-qr-code me-2"></i>QR Code Issues</h6>
+                    <ul class="small text-muted mb-0">
+                      <li>Make sure your camera is properly connected and has permission</li>
+                      <li>Position your QR code within the highlighted area</li>
+                      <li>Ensure adequate lighting for better scanning</li>
+                      <li>If the QR code isn't scanning, try entering your RFID manually</li>
+                    </ul>
+                  </div>
+                  <div class="col-md-6">
+                    <h6 class="fw-bold"><i class="bi bi-credit-card-2-front me-2"></i>RFID Issues</h6>
+                    <ul class="small text-muted mb-0">
+                      <li>The RFID number should be printed on your card</li>
+                      <li>Ensure you are entering the correct number</li>
+                      <li>Contact system administrator if your card isn't working</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+
+<script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+
+<style>
+  .auth-container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  
+  .auth-card {
+    border: none;
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+  
+  .auth-header {
+    background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);
+    padding: 2rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .auth-header::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('data:image/svg+xml;charset=utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"%3E%3Cpath fill="%23ffffff" fill-opacity="0.1" d="M0,224L48,213.3C96,203,192,181,288,154.7C384,128,480,96,576,117.3C672,139,768,213,864,229.3C960,245,1056,203,1152,170.7C1248,139,1344,117,1392,106.7L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"%3E%3C/path%3E%3C/svg%3E');
+    background-size: cover;
+    background-position: bottom;
+    opacity: 0.5;
+  }
+  
+  .auth-body {
+    padding: 2rem;
+  }
+  
+  .auth-method-option {
+    height: 100%;
+    padding: 1.5rem 1rem;
+    border-radius: 0.75rem;
+    border: 2px solid #dee2e6;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  }
+  
+  .auth-method-option:hover {
+    border-color: #0d6efd;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .auth-method-option.active {
+    border-color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.08);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .qr-scanner-container {
+    position: relative;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    aspect-ratio: 4/3;
+  }
+  
+  .scanner-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+  
+  .scan-region {
+    width: 70%;
+    height: 50%;
+    border: 2px dashed rgba(255, 255, 255, 0.8);
+    border-radius: 20px;
+    position: relative;
+    box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.3);
+  }
+  
+  .scanner-corners {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-width: 3px;
+    border-style: solid;
+    border-color: #0d6efd;
+  }
+  
+  .corner-top-left {
+    top: -3px;
+    left: -3px;
+    border-bottom: none;
+    border-right: none;
+    border-radius: 8px 0 0 0;
+  }
+  
+  .corner-top-right {
+    top: -3px;
+    right: -3px;
+    border-bottom: none;
+    border-left: none;
+    border-radius: 0 8px 0 0;
+  }
+  
+  .corner-bottom-left {
+    bottom: -3px;
+    left: -3px;
+    border-top: none;
+    border-right: none;
+    border-radius: 0 0 0 8px;
+  }
+  
+  .corner-bottom-right {
+    bottom: -3px;
+    right: -3px;
+    border-top: none;
+    border-left: none;
+    border-radius: 0 0 8px 0;
+  }
+  
+  .scan-line {
+    position: absolute;
+    top: 0;
+    left: 15%;
+    right: 15%;
+    height: 2px;
+    background: linear-gradient(90deg, 
+      rgba(13, 110, 253, 0), 
+      rgba(13, 110, 253, 1), 
+      rgba(13, 110, 253, 0));
+    z-index: 15;
+    animation: scan 2s linear infinite;
+  }
+  
+  @keyframes scan {
+    0% { top: 25%; }
+    50% { top: 75%; }
+    100% { top: 25%; }
+  }
+  
+  .countdown-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  
+  .rfid-container {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  
+  .rfid-input-group {
+    position: relative;
+  }
+  
+  .rfid-icon {
+    position: absolute;
+    top: 50%;
+    right: 1rem;
+    transform: translateY(-50%);
+    font-size: 1.5rem;
+    color: #6c757d;
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { transform: translateY(-50%) scale(1); opacity: 0.7; }
+    50% { transform: translateY(-50%) scale(1.1); opacity: 1; }
+  }
+  
+  .z-index-1 {
+    z-index: 20;
+  }
+  
+  /* Animations */
+  @keyframes fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-in-out;
+  }
+  
+  @keyframes scale-in {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  
+  .scale-in {
+    animation: scale-in 0.3s ease-out;
+  }
+  
+  /* QR Success Animation */
+  @keyframes success-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+  
+  #qrSuccess i {
+    animation: success-pulse 1s infinite;
+  }
+</style>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // DOM Elements
+  let methodSelect, qrMethodOption, rfidMethodOption, qrContainer, rfidContainer, 
+      cameraSelect, qrData, preview, loader, cameraError, countdownOverlay, 
+      countdownTimer, autoSubmitToggle, rfidInput, loginForm, qrSubmitBtn,
+      qrSuccess, scanStatus;
+
+  // Scanner variables
+  let scanner = null;
+  let autoSubmitTimer = null;
+  let countdown = 3; // seconds
+  let qrDetected = false;
+  
+  // Initialize DOM elements after page loads
+  document.addEventListener('DOMContentLoaded', function() {
+    methodSelect = document.getElementById('method');
+    qrMethodOption = document.getElementById('qrMethodOption');
+    rfidMethodOption = document.getElementById('rfidMethodOption');
+    qrContainer = document.getElementById('qrContainer');
+    rfidContainer = document.getElementById('rfidContainer');
+    cameraSelect = document.getElementById('cameraSelect');
+    qrData = document.getElementById('qr_data');
+    preview = document.getElementById('preview');
+    loader = document.getElementById('loader');
+    cameraError = document.getElementById('cameraError');
+    countdownOverlay = document.getElementById('countdownOverlay');
+    countdownTimer = document.getElementById('countdownTimer');
+    autoSubmitToggle = document.getElementById('autoSubmitToggle');
+    rfidInput = document.getElementById('rfid_input');
+    loginForm = document.getElementById('loginForm');
+    qrSubmitBtn = document.getElementById('qrSubmitBtn');
+    qrSuccess = document.getElementById('qrSuccess');
+    scanStatus = document.getElementById('scanStatus');
+    
+    // Initialize elements
+    showElement(loader);
+    hideElement(cameraError);
+    hideElement(countdownOverlay);
+    hideElement(qrSuccess);
+    
+    // Start QR method
+    populateCameraOptions().then(() => {
+      selectMethod('QR');
+    });
+    
+    // Add camera select event handler
+    if (cameraSelect) {
+      cameraSelect.addEventListener('change', function() {
+        if (methodSelect.value === 'QR') {
+          stopScanner();
+          showElement(loader);
+          hideElement(cameraError);
+          startScanner();
+        }
+      });
+    }
+    
+    // Pre-load feedback sounds
+    preloadAudio();
+  });
+  
+  // Utility function to show element
+  function showElement(element) {
+    if (element) {
+      element.classList.remove('d-none');
+      element.classList.add('d-flex');
+    }
+  }
+  
+  // Utility function to hide element
+  function hideElement(element) {
+    if (element) {
+      element.classList.remove('d-flex');
+      element.classList.add('d-none');
+    }
+  }
+  
+  // Method selection function
+  function selectMethod(method) {
+    if (!methodSelect) return;
+    
+    methodSelect.value = method;
+    
+    if (method === 'QR') {
+      qrMethodOption.classList.add('active');
+      rfidMethodOption.classList.remove('active');
+      qrContainer.classList.remove('d-none');
+      rfidContainer.classList.add('d-none');
+      startScanner();
+    } else {
+      qrMethodOption.classList.remove('active');
+      rfidMethodOption.classList.add('active');
+      qrContainer.classList.add('d-none');
+      rfidContainer.classList.remove('d-none');
+      stopScanner();
+      setTimeout(() => rfidInput.focus(), 100);
+    }
+  }
+  
+  // Populate camera options
+  async function populateCameraOptions() {
+    if (!cameraSelect) return;
+
+    if (typeof Instascan === 'undefined') {
+    console.error('Instascan library not loaded. Please try using RFID instead.');
+    showElement(cameraError);
+    hideElement(loader);
+    if (cameraError) {
+      cameraError.innerHTML = `
+        <div>
+          <i class="bi bi-exclamation-triangle-fill text-warning fs-1 mb-3 d-block"></i>
+          <h5 class="mb-3">QR Scanner Unavailable</h5>
+          <p class="mb-3">The QR scanner component couldn't be loaded. Please use RFID instead.</p>
+          <button onclick="selectMethod('RFID')" class="btn btn-light">
+            <i class="bi bi-credit-card-2-front me-2"></i>Switch to RFID
+          </button>
+        </div>
+      `;
+    }
+    return;
+  }
+    
+    try {
+      cameraSelect.innerHTML = '<option value="">Loading cameras...</option>';
+      
+      const cameras = await Instascan.Camera.getCameras();
+      cameraSelect.innerHTML = '';
+      
+      if (cameras.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.text = 'No cameras found';
+        cameraSelect.add(opt);
+        
+        showElement(cameraError);
+        hideElement(loader);
+        return;
+      }
+      
+      // Look for rear camera on mobile devices
+      const hasRearCamera = cameras.some(camera => 
+        camera.name && (
+          camera.name.toLowerCase().includes('back') || 
+          camera.name.toLowerCase().includes('rear') ||
+          camera.name.toLowerCase().includes('环境') ||  // Chinese for 'environment'
+          camera.name.toLowerCase().includes('arrière')  // French for 'rear'
+        )
+      );
+      
+      cameras.forEach((camera, idx) => {
+        const opt = document.createElement('option');
+        opt.value = idx.toString();
+        
+        // Label cameras appropriately
+        let label = camera.name || `Camera ${idx + 1}`;
+        if (camera.name && (
+          camera.name.toLowerCase().includes('back') || 
+          camera.name.toLowerCase().includes('rear') ||
+          camera.name.toLowerCase().includes('环境') ||
+          camera.name.toLowerCase().includes('arrière')
+        )) {
+          label += ' (Rear - Recommended)';
+          opt.selected = true;
+        }
+        
+        opt.text = label;
+        cameraSelect.add(opt);
+      });
+      
+      // If no rear camera found, select first camera
+      if (!hasRearCamera && cameras.length > 0) {
+        cameraSelect.selectedIndex = 0;
+      }
+      
+    } catch (err) {
+      console.error('Error getting cameras:', err);
+      showElement(cameraError);
+      hideElement(loader);
+    }
+  }
+  
+  // Start QR scanner
+  function startScanner() {
+    if (!preview || scanner !== null) return;
+
+    if (typeof Instascan === 'undefined') {
+    console.error('Instascan library not loaded. Please try using RFID instead.');
+    showElement(cameraError);
+    hideElement(loader);
+    if (cameraError) {
+      cameraError.innerHTML = `
+        <div>
+          <i class="bi bi-exclamation-triangle-fill text-warning fs-1 mb-3 d-block"></i>
+          <h5 class="mb-3">QR Scanner Unavailable</h5>
+          <p class="mb-3">The QR scanner component couldn't be loaded. Please use RFID instead.</p>
+          <button onclick="selectMethod('RFID')" class="btn btn-light">
+            <i class="bi bi-credit-card-2-front me-2"></i>Switch to RFID
+          </button>
+        </div>
+      `;
+    }
+    return;
+  }
+    
+    showElement(loader);
+    hideElement(cameraError);
+    hideElement(qrSuccess);
+    
+    try {
+      // Initialize scanner with improved options
+      scanner = new Instascan.Scanner({ 
+        video: preview, 
+        mirror: false,
+        backgroundScan: false,
+        scanPeriod: 5,  // Scan every 5ms for better performance
+        refractoryPeriod: 1000  // Minimum time between detections
+      });
+      
+      // Listen for scan events
+      scanner.addListener('scan', onScanSuccess);
+      
+      // Start camera
+      Instascan.Camera.getCameras()
+        .then(cameras => {
+          hideElement(loader);
+          
+          if (cameras.length === 0) {
+            showElement(cameraError);
+            return;
+          }
+          
+          // Use selected camera or default to first
+          const selectedCameraIndex = parseInt(cameraSelect.value) || 0;
+          const camera = cameras[selectedCameraIndex < cameras.length ? selectedCameraIndex : 0];
+          
+          scanner.start(camera)
+            .then(() => {
+              console.log('Camera started successfully');
+              if (qrSubmitBtn) qrSubmitBtn.disabled = false;
+            })
+            .catch(err => {
+              console.error('Error starting camera:', err);
+              showElement(cameraError);
+            });
+        })
+        .catch(err => {
+          console.error('Error getting cameras:', err);
+          hideElement(loader);
+          showElement(cameraError);
+        });
+    } catch (error) {
+      console.error('Scanner initialization error:', error);
+      hideElement(loader);
+      showElement(cameraError);
+    }
+  }
+  
+  // Stop QR scanner
+  function stopScanner() {
+    if (scanner) {
+      scanner.stop().catch(err => console.log('Error stopping scanner:', err));
+      scanner = null;
+    }
+    
+    // Reset QR detection state
+    qrDetected = false;
+    
+    // Clear any timers
+    clearInterval(autoSubmitTimer);
+    hideElement(countdownOverlay);
+    hideElement(qrSuccess);
+    
+    // Disable submit button
+    if (qrSubmitBtn) qrSubmitBtn.disabled = true;
+  }
+  
+  // Retry camera connection
+  function retryCamera() {
+    hideElement(cameraError);
+    showElement(loader);
+    
+    // Stop existing scanner
+    stopScanner();
+    
+    // Re-populate camera options and restart
+    populateCameraOptions()
+      .then(() => startScanner())
+      .catch(err => {
+        console.error('Error restarting camera:', err);
+        hideElement(loader);
+        showElement(cameraError);
+      });
+  }
+  
+  // Handle successful QR scan
+  function onScanSuccess(content) {
+    // Prevent multiple detections
+    if (qrDetected) return;
+    qrDetected = true;
+    
+    console.log('QR Code detected:', content);
+    
+    // Play feedback sound
+    playFeedbackSound();
+    
+    // Try to vibrate for mobile devices
+    try {
+      if (navigator.vibrate) {
+        navigator.vibrate([100, 50, 100]);
+      }
+    } catch (e) {
+      console.warn('Vibration not supported:', e);
+    }
+    
+    // Update UI
+    if (scanStatus) scanStatus.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>QR Code Detected';
+    if (scanStatus) scanStatus.classList.replace('bg-primary', 'bg-success');
+    
+    // Show success overlay
+    showElement(qrSuccess);
+    
+    // Update QR data field
+    if (qrData) qrData.value = content;
+    
+    // Enable submit button
+    if (qrSubmitBtn) qrSubmitBtn.disabled = false;
+    
+    // Auto-submit if enabled
+    if (autoSubmitToggle && autoSubmitToggle.checked) {
+      // Show countdown
+      countdown = 3;
+      if (countdownTimer) countdownTimer.textContent = countdown;
+      showElement(countdownOverlay);
+      
+      // Start countdown
+      autoSubmitTimer = setInterval(() => {
+        countdown--;
+        if (countdownTimer) countdownTimer.textContent = countdown;
+        
+        if (countdown <= 0) {
+          clearInterval(autoSubmitTimer);
+          if (loginForm) loginForm.submit();
+        }
+      }, 1000);
+    }
+  }
+  
+  // Preload audio for feedback
+  function preloadAudio() {
+    try {
+      const audio = new Audio("data:audio/mp3;base64,SUQzAwAAAAAAD1RJVDIAAAAZAAAAaHR0cDovL3d3dy5mcmVlc2Z4LmNvLnVrVFlFUgAAAAUAAAAyMDA5VENPTgAAAAUAAABTRlgAVERSQwAAAAUAAAAyMDA5Q09NTQAAADIAAABGWCBGUEUGQ29weXJpZ2h0IDIwMDkgZnJlZXNmeC5jby51a0FMQk0AAAAZAAAAaHR0cDovL3d3dy5mcmVlc2Z4LmNvLnVrVFBFMQAAAAUAAABTRlgAVEJQTQAAAAQAAAA5OQL/6VXDQAAAAABR7S0BCvwDQEhEAgEDQIoDQIAIQIEBQBAASUJJUgAAABYAAABjb3B5IHJpZ2h0IDIwMDkgYnkAT1ZZAAAAAQAAAFYAvnTapcHEgsQxF/7tEPZvqolFZLx5/WK1qRfW1+tuRp5m8+/XuUHwbvCOgIKCMsKCF8AhcEC0LCvCgjfAIcBALFxTwSFwQNC4YEEKDioYZjGBTFhYrGCKoQJVDGUYVLCwUMw0NQsKZgYGNcxMbCqYJRi0MCxGsEswaEJYzGCXYNCC4YYCXhbMNmEY7gS4o2AIwHAiYSjAoCRhWMDwIcFw4HhKgzsKhgQMEwrMDAwLCtfCTVRwDDfKTVMQijflpiggHm7MzVEQSjfGzVDAcbpJbtJQnEG6SW7SsBmD4qbcnKF4k25OAR4EJuGmtWA4UW7SAcQRbrIChAYME8pNVoA5g+GtxmcwaGLYnDFEYLioCKEBw4PyWQZ2DYYJDGMVhjsKhgQME8pnGdhRPsvA7gSDgwBTQ96QpYYZKUJowDCh7FyBXYNhAoOSQ9nzArsGw4RyCgXsCpQTKHAIUC6gwC5BuYUCuwTlCAoc+pMjKBwXeAEFSGxB0pqQvCYcMEg8C5LYgOQ1IXkNOJCQKBYcKEgIC5IBCWHBQkDwHDhIkPgFJLQBCWzAQYMEseBgQSJYkAAGJH4BCVtAwhaQuNqBJNVOJKV2IwG1BwE=");
+      audio.volume = 0.1; // Low volume for preload
+      audio.play().catch(e => console.log('Audio preload not supported'));
+    } catch (e) {
+      console.log('Audio preload not supported');
+    }
+  }
+  
+  // Play feedback sound when QR is detected
+  function playFeedbackSound() {
+    try {
+      const beep = new Audio("data:audio/mp3;base64,SUQzAwAAAAAAD1RJVDIAAAAZAAAAaHR0cDovL3d3dy5mcmVlc2Z4LmNvLnVrVFlFUgAAAAUAAAAyMDA5VENPTgAAAAUAAABTRlgAVERSQwAAAAUAAAAyMDA5Q09NTQAAADIAAABGWCBGUEUGQ29weXJpZ2h0IDIwMDkgZnJlZXNmeC5jby51a0FMQk0AAAAZAAAAaHR0cDovL3d3dy5mcmVlc2Z4LmNvLnVrVFBFMQAAAAUAAABTRlgAVEJQTQAAAAQAAAA5OQL/6VXDQAAAAABR7S0BCvwDQEhEAgEDQIoDQIAIQIEBQBAASUJJUgAAABYAAABjb3B5IHJpZ2h0IDIwMDkgYnkAT1ZZAAAAAQAAAFYAvnTapcHEgsQxF/7tEPZvqolFZLx5/WK1qRfW1+tuRp5m8+/XuUHwbvCOgIKCMsKCF8AhcEC0LCvCgjfAIcBALFxTwSFwQNC4YEEKDioYZjGBTFhYrGCKoQJVDGUYVLCwUMw0NQsKZgYGNcxMbCqYJRi0MCxGsEswaEJYzGCXYNCC4YYCXhbMNmEY7gS4o2AIwHAiYSjAoCRhWMDwIcFw4HhKgzsKhgQMEwrMDAwLCtfCTVRwDDfKTVMQijflpiggHm7MzVEQSjfGzVDAcbpJbtJQnEG6SW7SsBmD4qbcnKF4k25OAR4EJuGmtWA4UW7SAcQRbrIChAYME8pNVoA5g+GtxmcwaGLYnDFEYLioCKEBw4PyWQZ2DYYJDGMVhjsKhgQME8pnGdhRPsvA7gSDgwBTQ96QpYYZKUJowDCh7FyBXYNhAoOSQ9nzArsGw4RyCgXsCpQTKHAIUC6gwC5BuYUCuwTlCAoc+pMjKBwXeAEFSGxB0pqQvCYcMEg8C5LYgOQ1IXkNOJCQKBYcKEgIC5IBCWHBQkDwHDhIkPgFJLQBCWzAQYMEseBgQSJYkAAGJH4BCVtAwhaQuNqBJNVOJKV2IwG1BwE=");
+      beep.play().catch(e => console.warn('Could not play audio feedback'));
+    } catch (e) {
+      console.warn('Audio playback not supported');
+    }
+  }
+  
+  // Clean up on page unload
+  window.addEventListener('beforeunload', function() {
+    stopScanner();
+  });
+</script>
+{% endblock %}

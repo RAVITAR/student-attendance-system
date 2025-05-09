@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block title %}Edit Student - {{ student[0] }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  .edit-container {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  
+  .edit-card {
+    border: none;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  }
+  
+  .edit-header {
+    padding: 2rem;
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .edit-header::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('data:image/svg+xml;charset=utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"%3E%3Cpath fill="%23ffffff" fill-opacity="0.1" d="M0,224L48,213.3C96,203,192,181,288,154.7C384,128,480,96,576,117.3C672,139,768,213,864,229.3C960,245,1056,203,1152,170.7C1248,139,1344,117,1392,106.7L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"%3E%3C/path%3E%3C/svg%3E');
+    background-size: cover;
+    background-position: bottom;
+    opacity: 0.8;
+  }
+  
+  .edit-header-content {
+    position: relative;
+    z-index: 1;
+  }
+  
+  .student-avatar {
+    width: 100px;
+    height: 100px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: white;
+    margin: 0 auto 1.5rem;
+  }
+  
+  .form-floating {
+    margin-bottom: 1.5rem;
+  }
+  
+  .form-floating > .form-control {
+    padding: 1rem 0.75rem;
+  }
+  
+  .form-floating > label {
+    padding: 1rem 0.75rem;
+  }
+  
+  .btn-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  }
+  
+  .edit-body {
+    padding: 2rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5 animate-fade-in">
+  <div class="edit-container">
+    <div class="edit-card">
+      <!-- Header -->
+      <div class="edit-header text-center">
+        <div class="edit-header-content">
+          <div class="student-avatar">
+            {% if student[1]|length > 0 %}
+              {{ student[1][0]|upper }}
+            {% else %}
+              <i class="bi bi-person"></i>
+            {% endif %}
+          </div>
+          <h2 class="fw-bold mb-2">Edit Student</h2>
+          <p class="mb-0">Update information for {{ student[0] }}</p>
+        </div>
+      </div>
+      
+      <!-- Form Body -->
+      <div class="edit-body">
+        <form action="{{ url_for('staff_bp.edit_student', student_id=student[0]) }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <!-- Student ID (Read-only) -->
+          <div class="form-floating mb-4">
+            <input type="text" class="form-control bg-light" id="student_id" value="{{ student[0] }}" readonly>
+            <label for="student_id">Student ID</label>
+            <div class="form-text">Student ID cannot be modified</div>
+          </div>
+          
+          <!-- Name -->
+          <div class="form-floating mb-4">
+            <input type="text" class="form-control" id="name" name="name" value="{{ student[1] }}" required>
+            <label for="name">Full Name</label>
+          </div>
+          
+          <!-- RFID Card -->
+          <div class="form-floating mb-4">
+            <input type="text" class="form-control" id="rfid_card" name="rfid_card" value="{{ student[2] if student[2] else '' }}">
+            <label for="rfid_card">RFID Card Number</label>
+            <div class="form-text">Leave empty if student doesn't have an RFID card</div>
+          </div>
+          
+          <!-- Student Info Card -->
+          <div class="card mb-4 border-0 bg-light">
+            <div class="card-body">
+              <h5 class="card-title fw-bold">
+                <i class="bi bi-info-circle-fill text-primary me-2"></i>Student Information
+              </h5>
+              <dl class="row mb-0">
+                <dt class="col-sm-4">Face Enrollment:</dt>
+                <dd class="col-sm-8">
+                  {% set has_face = false %}
+                  {% for s in students if s[0] == student[0] %}
+                    {% if images_dict[s[0]] %}
+                      {% set has_face = true %}
+                    {% endif %}
+                  {% endfor %}
+                  
+                  {% if has_face %}
+                    <span class="badge bg-success">Enrolled</span>
+                  {% else %}
+                    <span class="badge bg-danger">Not Enrolled</span>
+                  {% endif %}
+                </dd>
+                
+                <dt class="col-sm-4">QR Code:</dt>
+                <dd class="col-sm-8">
+                  {% for s in students if s[0] == student[0] %}
+                    {% if s[3] %}
+                      <span class="badge bg-success">Generated</span>
+                    {% else %}
+                      <span class="badge bg-warning">Not Generated</span>
+                    {% endif %}
+                  {% endfor %}
+                </dd>
+              </dl>
+            </div>
+          </div>
+          
+          <!-- Action Buttons -->
+          <div class="d-grid gap-3">
+            <button type="submit" class="btn btn-primary btn-lg btn-hover">
+              <i class="bi bi-check-circle-fill me-2"></i>Save Changes
+            </button>
+            
+            <div class="d-flex gap-3">
+              {% for s in students if s[0] == student[0] %}
+                {% if not images_dict[s[0]] %}
+                  <a href="{{ url_for('staff_bp.enroll_face', student_id=student[0]) }}" class="btn btn-success flex-grow-1 btn-hover">
+                    <i class="bi bi-camera-fill me-2"></i>Enroll Face
+                  </a>
+                {% endif %}
+              {% endfor %}
+              
+              <a href="{{ url_for('staff_bp.admin_panel') }}" class="btn btn-outline-secondary flex-grow-1">
+                <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+              </a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Form validation
+  document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const nameInput = document.getElementById('name');
+    
+    form.addEventListener('submit', function(event) {
+      let isValid = true;
+      
+      // Validate name
+      if (nameInput.value.trim() === '') {
+        nameInput.classList.add('is-invalid');
+        isValid = false;
+      } else {
+        nameInput.classList.remove('is-invalid');
+      }
+      
+      if (!isValid) {
+        event.preventDefault();
+      }
+    });
+    
+    // Live validation
+    nameInput.addEventListener('input', function() {
+      if (this.value.trim() === '') {
+        this.classList.add('is-invalid');
+      } else {
+        this.classList.remove('is-invalid');
+      }
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,873 @@
+{% extends "base.html" %}
+{% block title %}Home - Advanced Attendance System{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* Enhanced styles for better visual appeal */
+  :root {
+    --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);
+    --secondary-gradient: linear-gradient(135deg, #6610f2 0%, #0dcaf0 100%);
+    --accent-color: #0dcaf0;
+    --hover-transform: translateY(-10px);
+    --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    --transition-speed: 0.3s;
+  }
+  
+  /* Smooth scrolling for better UX */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Enhanced Hero Section */
+  .hero-section {
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    position: relative;
+    box-shadow: var(--card-shadow);
+    margin-top: 2rem;
+  }
+  
+  .hero-section::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('data:image/svg+xml;charset=utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"%3E%3Cpath fill="%23ffffff" fill-opacity="0.1" d="M0,224L48,213.3C96,203,192,181,288,154.7C384,128,480,96,576,117.3C672,139,768,213,864,229.3C960,245,1056,203,1152,170.7C1248,139,1344,117,1392,106.7L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"%3E%3C/path%3E%3C/svg%3E');
+    background-size: cover;
+    background-position: bottom;
+    opacity: 0.5;
+    z-index: 0;
+  }
+
+  .cta-section h2 {
+  color: white;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); /* Add shadow for better contrast */
+  font-weight: 800; /* Make font bolder */
+  }
+
+  .cta-section {
+  background: linear-gradient(135deg, #064ca0 0%, #0989b1 100%) !important;
+  }
+  
+  .hero-content {
+    position: relative;
+    z-index: 1;
+  }
+  
+  .hero-title {
+    font-size: clamp(2.5rem, 5vw, 3.5rem);
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+    background: linear-gradient(to right, #ffffff, #e0e0e0);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .hero-subtitle {
+    font-size: clamp(1.1rem, 3vw, 1.5rem);
+    margin-bottom: 2rem;
+    font-weight: 400;
+    opacity: 0.9;
+    max-width: 600px;
+  }
+  
+  /* Feature Cards Enhancements */
+  .feature-card {
+    height: 100%;
+    transition: all var(--transition-speed) cubic-bezier(0.165, 0.84, 0.44, 1);
+    border: none;
+    border-radius: 1rem;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.9);
+  }
+  
+  .feature-card:hover {
+    transform: var(--hover-transform);
+    box-shadow: var(--card-shadow);
+  }
+  
+  .feature-icon {
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: inline-block;
+    transition: transform var(--transition-speed);
+  }
+  
+  .feature-card:hover .feature-icon {
+    transform: scale(1.2);
+  }
+  
+  .feature-card .card-title {
+    font-weight: 700;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    color: #333;
+  }
+  
+  .feature-card .card-text {
+    color: #555;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  
+  /* Animated CTA Buttons */
+  .cta-button {
+    transition: all var(--transition-speed) cubic-bezier(0.215, 0.610, 0.355, 1);
+    border-radius: 50px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+  }
+  
+  .cta-button::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 0;
+    background-color: rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+    z-index: -1;
+  }
+  
+  .cta-button:hover {
+    transform: scale(1.05) translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .cta-button:hover::after {
+    height: 100%;
+  }
+  
+  /* Enhanced Floating Animation */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+    filter: drop-shadow(0 15px 15px rgba(0, 0, 0, 0.2));
+  }
+  
+  @keyframes float {
+    0% { transform: translateY(0px) rotate(0deg); }
+    25% { transform: translateY(-15px) rotate(2deg); }
+    50% { transform: translateY(-25px) rotate(0deg); }
+    75% { transform: translateY(-15px) rotate(-2deg); }
+    100% { transform: translateY(0px) rotate(0deg); }
+  }
+  
+  /* How It Works Section Enhancements */
+  .step-card {
+    transition: all var(--transition-speed);
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+  }
+  
+  .step-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: var(--primary-gradient);
+    z-index: -1;
+    transition: width var(--transition-speed);
+  }
+  
+  .step-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+  }
+  
+  .step-card:hover::before {
+    width: 100%;
+    opacity: 0.1;
+  }
+  
+  .step-number {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-gradient);
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: white;
+    box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
+    margin-bottom: 1.5rem;
+    transition: transform var(--transition-speed);
+  }
+  
+  .step-card:hover .step-number {
+    transform: scale(1.1) rotate(10deg);
+  }
+  
+  /* Stats Section Enhancements */
+  .stat-card {
+    padding: 2rem;
+    background: white;
+    border-radius: 1rem;
+    transition: all var(--transition-speed);
+    border-left: 5px solid var(--accent-color);
+    margin-bottom: 1.5rem;
+  }
+  
+  .stat-card:hover {
+    transform: translateX(5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+  }
+  
+  .stat-number {
+    font-size: 3.5rem;
+    font-weight: 800;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Testimonial Enhancements */
+  .testimonial-card {
+    border: none;
+    border-radius: 1rem;
+    overflow: hidden;
+    transition: all var(--transition-speed);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+  }
+  
+  .testimonial-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 30px rgba(0, 0, 0, 0.1);
+  }
+  
+  .testimonial-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    background: var(--primary-gradient);
+    color: white;
+    margin-right: 1rem;
+  }
+  
+  /* Carousel Enhancements */
+  .carousel-indicators {
+    bottom: -50px;
+  }
+  
+  .carousel-indicators [data-bs-target] {
+    background-color: var(--accent-color);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin: 0 6px;
+  }
+  
+  .carousel-control-prev,
+  .carousel-control-next {
+    opacity: 0.7;
+    width: 50px;
+    height: 50px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .carousel-control-prev {
+    left: -25px;
+  }
+  
+  .carousel-control-next {
+    right: -25px;
+  }
+  
+  /* Final CTA Enhancements */
+  .cta-section {
+    border-radius: 2rem;
+    overflow: hidden;
+    position: relative;
+  }
+  
+  .cta-section::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('data:image/svg+xml;charset=utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"%3E%3Cpath fill="%23ffffff" fill-opacity="0.05" d="M0,128L48,149.3C96,171,192,213,288,224C384,235,480,213,576,181.3C672,149,768,107,864,112C960,117,1056,171,1152,197.3C1248,224,1344,224,1392,224L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"%3E%3C/path%3E%3C/svg%3E');
+    background-size: cover;
+    opacity: 0.8;
+    z-index: 0;
+  }
+  
+  /* Animations for elements */
+  .fade-in-up {
+    animation: fadeInUp 1s ease forwards;
+    opacity: 0;
+  }
+  
+  .delay-1 {
+    animation-delay: 0.2s;
+  }
+  
+  .delay-2 {
+    animation-delay: 0.4s;
+  }
+  
+  .delay-3 {
+    animation-delay: 0.6s;
+  }
+  
+  .delay-4 {
+    animation-delay: 0.8s;
+  }
+  
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Media queries for better responsiveness */
+  @media (max-width: 992px) {
+    .hero-content {
+      text-align: center;
+      padding: 2rem 0;
+    }
+    
+    .hero-subtitle {
+      margin: 0 auto 2rem;
+    }
+    
+    .stat-card {
+      text-align: center;
+    }
+    
+    .carousel-control-prev,
+    .carousel-control-next {
+      display: none;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .hero-section {
+      padding: 3rem 0;
+    }
+    
+    .step-card {
+      margin-bottom: 2rem;
+    }
+    
+    .cta-section .d-flex {
+      flex-direction: column;
+    }
+    
+    .cta-button {
+      margin-bottom: 1rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section with Enhanced Animation -->
+<section class="hero-section py-5 my-4">
+  <div class="container py-5">
+    <div class="row align-items-center hero-content">
+      <div class="col-lg-7 fade-in-up">
+        <h1 class="hero-title">Welcome to the Next-Gen Attendance System</h1>
+        <p class="hero-subtitle">Secure, reliable attendance tracking with advanced facial recognition and dual-factor authentication.</p>
+        <div class="d-flex flex-wrap gap-3 justify-content-lg-start justify-content-center">
+          <a href="{{ url_for('student_bp.student') }}" class="btn btn-light btn-lg cta-button">
+            <i class="bi bi-person-fill me-2"></i> Student Login
+          </a>
+          <a href="{{ url_for('staff_bp.staff_login') }}" class="btn btn-outline-light btn-lg cta-button">
+            <i class="bi bi-person-badge-fill me-2"></i> Staff Portal
+          </a>
+        </div>
+      </div>
+      <div class="col-lg-5 d-none d-lg-block text-center fade-in-up delay-2">
+        <img src="https://cdn-icons-png.flaticon.com/512/3456/3456426.png" alt="Face recognition illustration" class="img-fluid animate-float" width="320">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats Counter Banner -->
+<div class="container">
+  <div class="row g-4 mb-5 justify-content-center">
+    <div class="col-md-4 col-sm-6 fade-in-up">
+      <div class="card bg-light border-0 h-100 text-center py-4 shadow-sm">
+        <div class="card-body">
+          <i class="bi bi-people-fill fs-1 text-primary mb-3"></i>
+          <h3 class="counter fw-bold mb-0" data-target="10000">0</h3>
+          <p class="text-muted">Active Students</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 col-sm-6 fade-in-up delay-1">
+      <div class="card bg-light border-0 h-100 text-center py-4 shadow-sm">
+        <div class="card-body">
+          <i class="bi bi-building-fill-check fs-1 text-primary mb-3"></i>
+          <h3 class="counter fw-bold mb-0" data-target="50">0</h3>
+          <p class="text-muted">Partner Institutions</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 col-sm-6 fade-in-up delay-2">
+      <div class="card bg-light border-0 h-100 text-center py-4 shadow-sm">
+        <div class="card-body">
+          <i class="bi bi-calendar-check-fill fs-1 text-primary mb-3"></i>
+          <h3 class="counter fw-bold mb-0" data-target="1000000">0</h3>
+          <p class="text-muted">Attendances Tracked</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Enhanced Features Section -->
+<section class="container my-5 py-5">
+  <div class="text-center mb-5 fade-in-up">
+    <span class="badge bg-primary px-3 py-2 rounded-pill mb-3">POWERFUL FEATURES</span>
+    <h2 class="fw-bold display-5 mb-3">Advanced Technology Stack</h2>
+    <p class="text-muted lead col-md-8 mx-auto">Our system combines multiple cutting-edge technologies for secure and reliable attendance tracking</p>
+  </div>
+  
+  <div class="row g-4">
+    <!-- Feature 1 -->
+    <div class="col-lg-4 col-md-6 fade-in-up">
+      <div class="feature-card shadow h-100">
+        <div class="card-body p-4 text-center">
+          <div class="feature-icon">
+            <i class="bi bi-camera-fill"></i>
+          </div>
+          <h3 class="card-title">Facial Recognition</h3>
+          <p class="card-text">Advanced AI-powered facial recognition with 98% accuracy ensures student identity verification in real-time.</p>
+          <a href="#" class="btn btn-sm btn-outline-primary mt-3 rounded-pill">Learn More</a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Feature 2 -->
+    <div class="col-lg-4 col-md-6 fade-in-up delay-1">
+      <div class="feature-card shadow h-100">
+        <div class="card-body p-4 text-center">
+          <div class="feature-icon">
+            <i class="bi bi-shield-lock-fill"></i>
+          </div>
+          <h3 class="card-title">Dual-Factor Auth</h3>
+          <p class="card-text">Combined RFID card scanning and QR codes with facial verification for enhanced security and fraud prevention.</p>
+          <a href="#" class="btn btn-sm btn-outline-primary mt-3 rounded-pill">Learn More</a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Feature 3 -->
+    <div class="col-lg-4 col-md-6 fade-in-up delay-2">
+      <div class="feature-card shadow h-100">
+        <div class="card-body p-4 text-center">
+          <div class="feature-icon">
+            <i class="bi bi-graph-up"></i>
+          </div>
+          <h3 class="card-title">Detailed Analytics</h3>
+          <p class="card-text">Comprehensive attendance reports and analytics available for staff and administrators with powerful data visualization.</p>
+          <a href="#" class="btn btn-sm btn-outline-primary mt-3 rounded-pill">Learn More</a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Feature 4 -->
+    <div class="col-lg-4 col-md-6 fade-in-up delay-1">
+      <div class="feature-card shadow h-100">
+        <div class="card-body p-4 text-center">
+          <div class="feature-icon">
+            <i class="bi bi-clock-history"></i>
+          </div>
+          <h3 class="card-title">Real-time Tracking</h3>
+          <p class="card-text">Monitor attendance in real-time with instant notifications and alerts for unauthorized access attempts.</p>
+          <a href="#" class="btn btn-sm btn-outline-primary mt-3 rounded-pill">Learn More</a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Feature 5 -->
+    <div class="col-lg-4 col-md-6 fade-in-up delay-2">
+      <div class="feature-card shadow h-100">
+        <div class="card-body p-4 text-center">
+          <div class="feature-icon">
+            <i class="bi bi-cloud-check-fill"></i>
+          </div>
+          <h3 class="card-title">Cloud Integration</h3>
+          <p class="card-text">Seamlessly integrate with existing LMS platforms and cloud services for enhanced data synchronization.</p>
+          <a href="#" class="btn btn-sm btn-outline-primary mt-3 rounded-pill">Learn More</a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Feature 6 -->
+    <div class="col-lg-4 col-md-6 fade-in-up delay-3">
+      <div class="feature-card shadow h-100">
+        <div class="card-body p-4 text-center">
+          <div class="feature-icon">
+            <i class="bi bi-phone-fill"></i>
+          </div>
+          <h3 class="card-title">Mobile Friendly</h3>
+          <p class="card-text">Access attendance data on-the-go with our responsive mobile interface designed for administrators and students.</p>
+          <a href="#" class="btn btn-sm btn-outline-primary mt-3 rounded-pill">Learn More</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Improved How It Works Section -->
+<section class="bg-light py-5 my-5 rounded-4 shadow">
+  <div class="container py-4">
+    <div class="text-center mb-5 fade-in-up">
+      <span class="badge bg-primary px-3 py-2 rounded-pill mb-3">SIMPLIFIED PROCESS</span>
+      <h2 class="fw-bold display-5 mb-3">How It Works</h2>
+      <p class="text-muted lead">Simple three-step process for attendance tracking</p>
+    </div>
+    
+    <div class="row g-4">
+      <!-- Step 1 -->
+      <div class="col-lg-4 fade-in-up">
+        <div class="step-card h-100">
+          <div class="step-number">1</div>
+          <h4 class="fw-bold mb-3">Scan Your ID</h4>
+          <p class="text-muted mb-2">Use either your RFID card or personal QR code to initiate the attendance process.</p>
+          <ul class="text-muted small ps-3">
+            <li>Quick scanning for instant recognition</li>
+            <li>Multiple options for convenience</li>
+            <li>Secure ID verification</li>
+          </ul>
+          <img src="https://cdn-icons-png.flaticon.com/512/1803/1803612.png" class="mt-3 img-fluid" width="80" alt="Scan ID">
+        </div>
+      </div>
+      
+      <!-- Step 2 -->
+      <div class="col-lg-4 fade-in-up delay-1">
+        <div class="step-card h-100">
+          <div class="step-number">2</div>
+          <h4 class="fw-bold mb-3">Face Verification</h4>
+          <p class="text-muted mb-2">Look at the camera for a quick facial recognition verification to confirm your identity.</p>
+          <ul class="text-muted small ps-3">
+            <li>Takes less than 2 seconds</li>
+            <li>Works in various lighting conditions</li>
+            <li>99.8% recognition accuracy</li>
+          </ul>
+          <img src="https://cdn-icons-png.flaticon.com/512/2271/2271092.png" class="mt-3 img-fluid" width="80" alt="Face Verification">
+        </div>
+      </div>
+      
+      <!-- Step 3 -->
+      <div class="col-lg-4 fade-in-up delay-2">
+        <div class="step-card h-100">
+          <div class="step-number">3</div>
+          <h4 class="fw-bold mb-3">Attendance Logged</h4>
+          <p class="text-muted mb-2">Your attendance is securely recorded and available for review by authorized staff.</p>
+          <ul class="text-muted small ps-3">
+            <li>Instant confirmation notifications</li>
+            <li>Encrypted data storage</li>
+            <li>Detailed attendance history</li>
+          </ul>
+          <img src="https://cdn-icons-png.flaticon.com/512/190/190411.png" class="mt-3 img-fluid" width="80" alt="Attendance Logged">
+        </div>
+      </div>
+    </div>
+    
+</section>
+
+<!-- Enhanced Stats & Testimonials Section -->
+<section class="container my-5 py-5">
+  <div class="carousel-item">
+    <div class="testimonial-card">
+      <div class="card-body p-4">
+        <div class="d-flex mb-4">
+          <i class="bi bi-star-fill text-warning me-1"></i>
+          <i class="bi bi-star-fill text-warning me-1"></i>
+          <i class="bi bi-star-fill text-warning me-1"></i>
+          <i class="bi bi-star-fill text-warning me-1"></i>
+          <i class="bi bi-star-fill text-warning me-1"></i>
+        </div>
+        <p class="card-text fst-italic fs-5 mb-4">Quick, seamless attendance tracking that eliminates traditional sign-in hassles.</p>
+        <div class="d-flex align-items-center">
+          <div class="testimonial-avatar">MJ</div>
+          <div>
+            <h5 class="mb-0 fw-bold">Michael Johnson</h5>
+            <p class="text-muted mb-0">Student</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Partner Logos Section -->
+<section class="bg-light py-5 my-5 rounded-4">
+  <div class="container py-3">
+    <div class="text-center mb-5 fade-in-up">
+      <h2 class="fw-bold h3 mb-4">Trusted by Leading Educational Institutions</h2>
+      <p class="text-muted col-lg-8 mx-auto">Our attendance system is implemented at top universities and schools worldwide</p>
+    </div>
+    
+    <div class="row g-4 align-items-center justify-content-center">
+      <!-- Partner logos would go here - using placeholders -->
+      <div class="col-6 col-md-4 col-lg-2 fade-in-up">
+        <div class="bg-white rounded-3 shadow-sm p-4 text-center h-100 d-flex align-items-center justify-content-center">
+          <div class="fw-bold text-primary">University A</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2 fade-in-up delay-1">
+        <div class="bg-white rounded-3 shadow-sm p-4 text-center h-100 d-flex align-items-center justify-content-center">
+          <div class="fw-bold text-primary">College B</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2 fade-in-up delay-2">
+        <div class="bg-white rounded-3 shadow-sm p-4 text-center h-100 d-flex align-items-center justify-content-center">
+          <div class="fw-bold text-primary">Institute C</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2 fade-in-up delay-3">
+        <div class="bg-white rounded-3 shadow-sm p-4 text-center h-100 d-flex align-items-center justify-content-center">
+          <div class="fw-bold text-primary">Academy D</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2 fade-in-up delay-4">
+        <div class="bg-white rounded-3 shadow-sm p-4 text-center h-100 d-flex align-items-center justify-content-center">
+          <div class="fw-bold text-primary">School E</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-2 fade-in-up delay-5">
+        <div class="bg-white rounded-3 shadow-sm p-4 text-center h-100 d-flex align-items-center justify-content-center">
+          <div class="fw-bold text-primary">University F</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="container my-5 py-4">
+  <div class="text-center mb-5 fade-in-up">
+    <span class="badge bg-primary px-3 py-2 rounded-pill mb-3">FREQUENTLY ASKED QUESTIONS</span>
+    <h2 class="fw-bold display-5 mb-3">Got Questions?</h2>
+    <p class="text-muted lead col-md-8 mx-auto">Find answers to common questions about our attendance system</p>
+  </div>
+  
+  <div class="row justify-content-center fade-in-up">
+    <div class="col-lg-10">
+      <div class="accordion accordion-flush" id="faqAccordion">
+        <div class="accordion-item border-0 mb-3 shadow-sm rounded-3 overflow-hidden">
+          <h2 class="accordion-header" id="faqOne">
+            <button class="accordion-button collapsed bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+              How accurate is the facial recognition system?
+            </button>
+          </h2>
+          <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="faqOne" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">
+              Our facial recognition system achieves a remarkable 98% accuracy rate. It uses advanced AI algorithms that can identify students even with minor changes in appearance like glasses, facial hair, or different hairstyles. The system is continuously trained to improve its accuracy and performance.
+            </div>
+          </div>
+        </div>
+        
+        <div class="accordion-item border-0 mb-3 shadow-sm rounded-3 overflow-hidden">
+          <h2 class="accordion-header" id="faqTwo">
+            <button class="accordion-button collapsed bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+              What happens if a student forgets their RFID card or QR code?
+            </button>
+          </h2>
+          <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="faqTwo" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">
+              We've designed the system with flexibility in mind. If a student forgets their RFID card, they can use the QR code option which can be accessed through their student portal or mobile app. In rare cases where neither option is available, administrators have an override function to manually record attendance after verifying the student's identity.
+            </div>
+          </div>
+        </div>
+        
+        <div class="accordion-item border-0 mb-3 shadow-sm rounded-3 overflow-hidden">
+          <h2 class="accordion-header" id="faqThree">
+            <button class="accordion-button collapsed bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+              Is student data kept secure and private?
+            </button>
+          </h2>
+          <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="faqThree" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">
+              Absolutely. We prioritize data security and privacy. All facial recognition data is encrypted and stored securely. We comply with GDPR, FERPA, and other relevant data protection regulations. Biometric data is never shared with third parties, and students can request access to or deletion of their data at any time.
+            </div>
+          </div>
+        </div>
+        
+        <div class="accordion-item border-0 mb-3 shadow-sm rounded-3 overflow-hidden">
+          <h2 class="accordion-header" id="faqFour">
+            <button class="accordion-button collapsed bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+              Can the system integrate with existing school management software?
+            </button>
+          </h2>
+          <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="faqFour" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">
+              Yes, our system is designed to seamlessly integrate with popular school management systems like Blackboard, Canvas, Moodle, and others through our comprehensive API. This allows attendance data to automatically sync with your existing gradebooks and student information systems.
+            </div>
+          </div>
+        </div>
+        
+        <div class="accordion-item border-0 shadow-sm rounded-3 overflow-hidden">
+          <h2 class="accordion-header" id="faqFive">
+            <button class="accordion-button collapsed bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+              How long does it take to implement the system?
+            </button>
+          </h2>
+          <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="faqFive" data-bs-parent="#faqAccordion">
+            <div class="accordion-body">
+              Implementation typically takes 2-4 weeks depending on the size of your institution. This includes hardware installation, software setup, integration with existing systems, student enrollment, and staff training. Our dedicated implementation team will work closely with your IT department to ensure a smooth transition.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Enhanced Final CTA Section -->
+<section class="container my-5 text-center">
+  <div class="card shadow border-0 bg-gradient p-3 p-md-5 rounded-4 cta-section" style="background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%);">
+    <div class="card-body py-5 text-white position-relative">
+      <span class="badge bg-white text-primary px-3 py-2 rounded-pill mb-3 fade-in-up">GET STARTED TODAY</span>
+      <h2 class="fw-bold display-5 mb-4 fade-in-up delay-1 text-white">Ready to Revolutionize Your Attendance Process?</h2>
+      <p class="lead mb-5 col-lg-8 mx-auto fade-in-up delay-2">Join thousands of students and educators already using our cutting-edge attendance system</p>
+      
+      <div class="row justify-content-center fade-in-up delay-3">
+        <div class="col-lg-8">
+          <div class="card bg-white bg-opacity-10 border-0 mb-4 p-3 p-md-4 rounded-4">
+            <div class="card-body">
+              <div class="row align-items-center">
+                <div class="col-md-7 text-md-start mb-3 mb-md-0">
+                  <h4 class="text-white mb-2">Request a Free Demo</h4>
+                  <p class="text-white-50 mb-0">See the system in action with a personalized demonstration</p>
+                </div>
+                <div class="col-md-5">
+                  <a href="#" class="btn btn-light btn-lg w-100 rounded-pill fw-bold">
+                    <i class="bi bi-calendar-check me-2"></i>Schedule Demo
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="d-flex justify-content-center gap-3 flex-wrap">
+        <a href="{{ url_for('student_bp.student') }}" class="btn btn-light btn-lg cta-button">
+          <i class="bi bi-person-fill me-2"></i> Student Access
+        </a>
+        <a href="{{ url_for('staff_bp.staff_login') }}" class="btn btn-outline-light btn-lg cta-button">
+          <i class="bi bi-person-badge-fill me-2"></i> Staff Portal
+        </a>
+      </div>
+      
+      <div class="mt-5 pt-3 border-top border-white border-opacity-25 text-white-50 fade-in-up delay-4">
+        <div class="row justify-content-center">
+          <div class="col-md-4 mb-3 mb-md-0">
+            <div class="d-flex align-items-center justify-content-center">
+              <i class="bi bi-telephone-fill me-2"></i>
+              <span>24/7 Support: (800) 123-4567</span>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="d-flex align-items-center justify-content-center">
+              <i class="bi bi-envelope-fill me-2"></i>
+              <span>support@attendancesystem.com</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Animation for counters
+  document.addEventListener('DOMContentLoaded', function() {
+    // Intersection Observer for animations
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          
+          // If it's a counter element, start counting
+          if (entry.target.classList.contains('counter')) {
+            const counter = entry.target;
+            const target = parseInt(counter.getAttribute('data-target'));
+            const duration = 2000; // 2 seconds
+            const step = Math.ceil(target / (duration / 20)); // Update every 20ms
+            let current = 0;
+            
+            const timer = setInterval(() => {
+              current += step;
+              if (current >= target) {
+                current = target;
+                clearInterval(timer);
+              }
+              counter.textContent = current.toLocaleString();
+            }, 20);
+          }
+          
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    
+    // Observe all elements with fade-in-up class
+    document.querySelectorAll('.fade-in-up').forEach(element => {
+      observer.observe(element);
+    });
+    
+    // Observe counters
+    document.querySelectorAll('.counter').forEach(counter => {
+      observer.observe(counter);
+    });
+    
+    // Enable all tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+  });
+</script>
+{% endblock %}

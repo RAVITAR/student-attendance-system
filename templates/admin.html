@@ -1,0 +1,289 @@
+<!-- templates/staff_dashboard.html -->
+{% extends "base.html" %}
+{% block title %}Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">Administrator Panel</h2>
+    <a href="{{ url_for('staff_bp.logout') }}" class="btn btn-outline-danger">Logout</a>
+  </div>
+  <p class="text-muted">
+    Manage student records, enroll faces, train the model, edit student data, or remove logs entirely.
+  </p>
+
+  {% if accuracy_info %}
+    <div class="alert alert-info d-flex align-items-center" role="alert">
+      <i class="bi bi-info-circle me-2"></i>
+      <div><strong>Last Training Accuracy:</strong> {{ accuracy_info }}%</div>
+    </div>
+  {% else %}
+    <div class="alert alert-warning d-flex align-items-center" role="alert">
+      <i class="bi bi-exclamation-triangle me-2"></i>
+      <div><strong>No recent training accuracy data found.</strong> Please train the model below.</div>
+    </div>
+  {% endif %}
+
+  <!-- Accordion: Technical & System Info -->
+  <div class="accordion mb-4" id="adminAccordion">
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingTech">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseTech" aria-expanded="false" aria-controls="collapseTech">
+          Technical Details &amp; Model Info
+        </button>
+      </h2>
+      <div id="collapseTech" class="accordion-collapse collapse" aria-labelledby="headingTech" data-bs-parent="#adminAccordion">
+        <div class="accordion-body">
+          <p><strong>Face Recognition Pipeline:</strong> SVM with StandardScaler and PCA for robust face matching. </p>
+          <p>Images: <code>100x100</code> grayscale. Typical accuracy: <em>{{ accuracy_info or 'N/A' }}%</em>.</p>
+          <p>2-Factor Authentication includes:
+            <ul>
+              <li>QR / RFID</li>
+              <li>Face Recognition</li>
+            </ul>
+          </p>
+          <p class="mb-0"><em>Note:</em> Ensure proper lighting and minimal motion blur during face enrollment.</p>
+        </div>
+      </div>
+    </div>
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingSystem">
+        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseSystem" aria-expanded="false" aria-controls="collapseSystem">
+          System Info &amp; Usage
+        </button>
+      </h2>
+      <div id="collapseSystem" class="accordion-collapse collapse" aria-labelledby="headingSystem" data-bs-parent="#adminAccordion">
+        <div class="accordion-body">
+          <p><strong>Deployment:</strong> Flask &amp; MySQL. Use HTTPS in production. Docker recommended for scalability.</p>
+          <p><strong>Admin Usage:</strong>
+             <ul>
+               <li>Authorized staff only.</li>
+               <li>Activity is audited.</li>
+               <li>Always log out after tasks.</li>
+             </ul>
+          </p>
+          <p class="mb-0 text-muted"><em>Issues?</em> Contact the system administrator.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="d-flex flex-wrap gap-3 mb-4">
+    <!-- Add Student Card -->
+    <div class="card flex-grow-1 shadow">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0"><i class="bi bi-person-plus-fill me-2"></i>Add New Student</h4>
+      </div>
+      <div class="card-body">
+        <form action="{{ url_for('staff_bp.add_student') }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label for="student_id" class="form-label fw-semibold">Student ID:</label>
+            <input type="text" name="student_id" id="student_id" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label for="name" class="form-label fw-semibold">Name:</label>
+            <input type="text" name="name" id="name" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label for="rfid_card" class="form-label fw-semibold">RFID Card (optional):</label>
+            <input type="text" name="rfid_card" id="rfid_card" class="form-control">
+          </div>
+          <button type="submit" class="btn btn-primary w-100 shadow">
+            <i class="bi bi-person-check-fill"></i> Add Student
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Train Model Button -->
+    <div class="align-self-center">
+      <a href="{{ url_for('staff_bp.get_training_status') }}" 
+         class="btn btn-warning btn-lg shadow"
+         data-bs-toggle="tooltip" data-bs-placement="top" 
+         title="Retrain the face recognition model with the latest data.">
+        <i class="bi bi-cpu"></i> Train Model
+      </a>
+    </div>
+
+    <!-- Back to Home Button -->
+    <div class="align-self-center">
+      <a href="{{ url_for('home') }}" class="btn btn-secondary btn-lg shadow">
+        <i class="bi bi-house"></i> Home
+      </a>
+    </div>
+  </div>
+
+  <!-- Student Search Form -->
+  <form action="{{ url_for('staff_bp.admin_panel') }}" method="get" class="row g-3 mb-4">
+    <div class="col-auto">
+      <input type="text" name="search_students" value="{{ search_students }}" 
+             class="form-control" placeholder="Search students by ID, name, or RFID...">
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-outline-primary">
+        <i class="bi bi-search"></i> Search Students
+      </button>
+    </div>
+  </form>
+
+  <!-- Existing Students Table with QR Code Column -->
+  <div class="card shadow mb-4">
+    <div class="card-header bg-secondary text-white">
+      <h4 class="mb-0"><i class="bi bi-people-fill me-2"></i>Existing Students</h4>
+    </div>
+    <div class="card-body">
+      {% if students %}
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>Student ID</th>
+                <th>Name</th>
+                <th>RFID Card</th>
+                <th>Picture</th>
+                <th>QR Code</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for s in students %}
+              <tr>
+                <td><strong>{{ s[0] }}</strong></td>
+                <td>{{ s[1] }}</td>
+                <td>{{ s[2] or 'N/A' }}</td>
+                <td>
+                  {% set first_image = images_dict[s[0]] %}
+                  {% if first_image %}
+                    <img src="{{ url_for('staff_bp.student_images', student_id=s[0], filename=first_image) }}"
+                         alt="Face" width="60" height="60" class="rounded">
+                  {% else %}
+                    <span class="text-muted">No images</span>
+                  {% endif %}
+                </td>
+                <!-- New QR Code Column -->
+                <td>
+                  {% if s[3] %}
+                    <img src="{{ url_for('static', filename='qr_codes/' ~ s[3]) }}" 
+                         alt="QR Code for {{ s[0] }}" width="80" class="img-thumbnail mb-2">
+                    <br>
+                    <a href="{{ url_for('static', filename='qr_codes/' ~ s[3]) }}" download class="small text-decoration-underline">Download</a>
+                  {% else %}
+                    <span class="text-muted">No QR Code</span>
+                  {% endif %}
+                </td>
+                <td class="d-flex gap-2">
+                  <a class="btn btn-success btn-sm shadow" 
+                     href="{{ url_for('staff_bp.enroll_face', student_id=s[0]) }}">
+                    <i class="bi bi-camera-fill"></i> Enroll
+                  </a>
+                  <a class="btn btn-info btn-sm shadow" 
+                     href="{{ url_for('staff_bp.edit_student', student_id=s[0]) }}">
+                    <i class="bi bi-pencil-square"></i> Edit
+                  </a>
+                  <a class="btn btn-danger btn-sm shadow"
+                     href="{{ url_for('staff_bp.delete_student', student_id=s[0]) }}"
+                     onclick="return confirm('Delete student {{ s[0] }}? This also removes images.');">
+                    <i class="bi bi-trash-fill"></i> Delete
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-muted">No students found. Please add new students above.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Log Search Form -->
+  <form action="{{ url_for('staff_bp.admin_panel') }}" method="get" class="row g-3 mb-4">
+    <!-- Retain student search query if needed -->
+    <input type="hidden" name="search_students" value="{{ search_students }}">
+    <div class="col-auto">
+      <input type="text" name="search_logs" value="{{ search_logs }}"
+             class="form-control" placeholder="Search logs by ID, name, RFID, or method...">
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-outline-primary">
+        <i class="bi bi-search"></i> Search Logs
+      </button>
+    </div>
+  </form>
+
+  <!-- Recent Attendance Logs with QR Code Column -->
+  <div class="card shadow mb-4">
+    <div class="card-header bg-info text-white">
+      <h4 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Attendance Logs</h4>
+    </div>
+    <div class="card-body">
+      {% if logs %}
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle table-hover" id="logsTable">
+            <thead class="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Student ID</th>
+                <th>Name</th>
+                <th>RFID Card</th>
+                <!-- New QR Code Column for Logs -->
+                <th>QR Code</th>
+                <th>Method</th>
+                <th>Timestamp</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for log in logs %}
+              <tr>
+                <td>{{ log[0] }}</td>
+                <td>{{ log[1] }}</td>
+                <td>{{ log[2] or 'Unknown' }}</td>
+                <td>{{ log[3] or 'N/A' }}</td>
+                <!-- New QR Code Column -->
+                <td>
+                  {% if log[6] %}
+                    <img src="{{ url_for('static', filename='qr_codes/' ~ log[6]) }}" 
+                         alt="QR Code for {{ log[1] }}" width="60" class="img-thumbnail mb-1">
+                    <br>
+                    <a href="{{ url_for('static', filename='qr_codes/' ~ log[6]) }}" download class="small text-decoration-underline">Download</a>
+                  {% else %}
+                    <span class="text-muted">N/A</span>
+                  {% endif %}
+                </td>
+                <td>{{ log[4] }}</td>
+                <td>{{ log[5] }}</td>
+                <td>
+                  <a class="btn btn-danger btn-sm shadow"
+                     href="{{ url_for('staff_bp.delete_attendance', log_id=log[0]) }}"
+                     onclick="return confirm('Are you sure you want to delete attendance #{{ log[0] }}?');">
+                    <i class="bi bi-trash-fill"></i> Delete
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-muted">No attendance logs found.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Enable Bootstrap tooltips
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+  tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+  });
+</script>
+{% endblock %}

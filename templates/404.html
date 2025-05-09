@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Page Not Found{% endblock %}
+
+{% block extra_head %}
+<style>
+  .error-container {
+    max-width: 700px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  
+  .error-code {
+    font-size: 8rem;
+    font-weight: 800;
+    color: #dc3545;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 0;
+    line-height: 1;
+  }
+  
+  .error-message {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+  }
+  
+  .error-details {
+    font-size: 1.1rem;
+    color: #6c757d;
+    margin-bottom: 2rem;
+  }
+  
+  .error-image {
+    max-width: 300px;
+    margin: 2rem auto;
+    filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+    100% { transform: translateY(0px); }
+  }
+  
+  .error-cta {
+    margin-top: 2rem;
+  }
+  
+  .error-cta .btn {
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    border-radius: 50rem;
+    transition: all 0.3s;
+  }
+  
+  .error-cta .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  }
+  
+  .suggestions {
+    max-width: 500px;
+    margin: 2rem auto;
+    text-align: left;
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+  }
+  
+  .suggestions h5 {
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #212529;
+  }
+  
+  .suggestions ul {
+    padding-left: 1.5rem;
+  }
+  
+  .suggestions li {
+    margin-bottom: 0.5rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <div class="error-container animate-fade-in">
+    <h1 class="error-code animate-slide-in">404</h1>
+    <h2 class="error-message">Oops! Page Not Found</h2>
+    <p class="error-details">
+      The page you are looking for might have been removed, had its name changed,
+      or is temporarily unavailable.
+    </p>
+    
+    <img src="https://cdn-icons-png.flaticon.com/512/2748/2748558.png" alt="404 Error" class="error-image">
+    
+    <div class="suggestions">
+      <h5><i class="bi bi-lightbulb-fill text-warning me-2"></i>Suggestions:</h5>
+      <ul>
+        <li>Check the URL for typos or errors</li>
+        <li>Go back to the previous page</li>
+        <li>Visit our homepage</li>
+        <li>If you believe this is an error, please contact the administrator</li>
+      </ul>
+    </div>
+    
+    <div class="error-cta">
+      <a href="{{ url_for('home') }}" class="btn btn-primary btn-lg me-3">
+        <i class="bi bi-house-door-fill me-2"></i>Back to Home
+      </a>
+      <button onclick="history.back()" class="btn btn-outline-secondary btn-lg">
+        <i class="bi bi-arrow-left me-2"></i>Go Back
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}

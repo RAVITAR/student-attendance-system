@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+{% block title %}Login Successful - Attendance System{% endblock %}
+
+{% block extra_head %}
+<style>
+  .success-container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .success-card {
+    border: none;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  }
+  
+  .success-header {
+    background: linear-gradient(135deg, #198754 0%, #20c997 100%);
+    padding: 2rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .success-header::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('data:image/svg+xml;charset=utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"%3E%3Cpath fill="%23ffffff" fill-opacity="0.1" d="M0,224L48,213.3C96,203,192,181,288,154.7C384,128,480,96,576,117.3C672,139,768,213,864,229.3C960,245,1056,203,1152,170.7C1248,139,1344,117,1392,106.7L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"%3E%3C/path%3E%3C/svg%3E');
+    background-size: cover;
+    background-position: bottom;
+    opacity: 0.5;
+  }
+  
+  .success-icon {
+    font-size: 4rem;
+    height: 100px;
+    width: 100px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+  }
+  
+  .success-body {
+    padding: 2rem;
+  }
+  
+  .info-card {
+    border-radius: 0.75rem;
+    border-left: 4px solid #198754;
+    background-color: rgba(25, 135, 84, 0.05);
+    transition: all 0.3s;
+  }
+  
+  .info-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+  }
+  
+  .attendance-details {
+    border-radius: 0.5rem;
+    background-color: #f8f9fa;
+  }
+  
+  .detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e9ecef;
+  }
+  
+  .detail-item:last-child {
+    border-bottom: none;
+  }
+  
+  .detail-label {
+    font-weight: 600;
+    color: #6c757d;
+  }
+  
+  .detail-value {
+    font-weight: 500;
+  }
+  
+  .confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    background-color: #f00;
+    border-radius: 50%;
+    opacity: 0;
+    animation: fall 5s ease-out forwards;
+    z-index: -1;
+  }
+  
+  @keyframes fall {
+    0% {
+      transform: translateY(-100vh) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100vh) rotate(360deg);
+      opacity: 0;
+    }
+  }
+  
+  @keyframes success-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  
+  .success-pulse {
+    animation: success-pulse 2s infinite;
+  }
+  
+  @keyframes fade-in-up {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .fade-in-up {
+    animation: fade-in-up 0.5s ease-out forwards;
+  }
+  
+  .delay-1 {
+    animation-delay: 0.1s;
+  }
+  
+  .delay-2 {
+    animation-delay: 0.2s;
+  }
+  
+  .delay-3 {
+    animation-delay: 0.3s;
+  }
+  
+  .auto-redirect {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .progress-bar-container {
+    height: 4px;
+    background-color: rgba(25, 135, 84, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+  }
+  
+  .progress-bar-fill {
+    height: 100%;
+    background-color: #198754;
+    border-radius: 2px;
+    width: 100%;
+    animation: countdown 10s linear forwards;
+  }
+  
+  @keyframes countdown {
+    0% { width: 100%; }
+    100% { width: 0%; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container success-container my-4">
+  <div class="success-card">
+    <!-- Header -->
+    <div class="success-header text-center">
+      <div class="position-relative">
+        <div class="success-icon success-pulse">
+          <i class="bi bi-check-circle-fill"></i>
+        </div>
+        <h2 class="fw-bold mb-2">Attendance Recorded Successfully!</h2>
+        <p class="mb-0">Your attendance has been successfully logged in the system</p>
+      </div>
+    </div>
+    
+    <!-- Body -->
+    <div class="success-body">
+      <!-- Student Information -->
+      <div class="card info-card mb-4 fade-in-up">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center mb-3">
+            <i class="bi bi-person-badge-fill text-success fs-4 me-3"></i>
+            <h5 class="fw-bold mb-0">Student Information</h5>
+          </div>
+          
+          <div class="attendance-details p-3">
+            <div class="detail-item">
+              <span class="detail-label">Student ID:</span>
+              <span class="detail-value">{{ student_id }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Name:</span>
+              <span class="detail-value">{{ student_name }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Authentication Method:</span>
+              <span class="detail-value">
+                {% if auth_method == "QR+Face" %}
+                  <span class="badge bg-primary">QR Code</span> + <span class="badge bg-success">Face Recognition</span>
+                {% elif auth_method == "RFID+Face" %}
+                  <span class="badge bg-info">RFID</span> + <span class="badge bg-success">Face Recognition</span>
+                {% else %}
+                  <span class="badge bg-secondary">{{ auth_method }}</span>
+                {% endif %}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Attendance Details -->
+      <div class="card info-card mb-4 fade-in-up delay-1">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center mb-3">
+            <i class="bi bi-calendar-check-fill text-success fs-4 me-3"></i>
+            <h5 class="fw-bold mb-0">Attendance Details</h5>
+          </div>
+          
+          <div class="attendance-details p-3">
+            <div class="detail-item">
+              <span class="detail-label">Date:</span>
+              <span class="detail-value">{{ attendance_date|default(current_date) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Time:</span>
+              <span class="detail-value">{{ attendance_time|default(current_time) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Status:</span>
+              <span class="detail-value">
+                <span class="badge bg-success">Confirmed</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Authentication Summary -->
+      <div class="card info-card mb-4 fade-in-up delay-2">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center mb-3">
+            <i class="bi bi-shield-check text-success fs-4 me-3"></i>
+            <h5 class="fw-bold mb-0">Authentication Summary</h5>
+          </div>
+          
+          <div class="attendance-details p-3">
+            <div class="detail-item">
+              <span class="detail-label">Face Match:</span>
+              <span class="detail-value">
+                <i class="bi bi-check-circle-fill text-success me-1"></i> Successful
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Identity Verified:</span>
+              <span class="detail-value">
+                <i class="bi bi-check-circle-fill text-success me-1"></i> Confirmed
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Confidence Score:</span>
+              <span class="detail-value">{{ confidence_score|default('98') }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Auto Redirect Notice -->
+      <div class="alert alert-success auto-redirect fade-in-up delay-3">
+        <div class="d-flex align-items-center">
+          <i class="bi bi-info-circle-fill me-2"></i>
+          <div>
+            <span>You will be automatically redirected to the home page in <span id="countdown">10</span> seconds.</span>
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Action Buttons -->
+      <div class="d-flex gap-3 justify-content-center mt-4 fade-in-up delay-3">
+        <a href="{{ url_for('home') }}" class="btn btn-success">
+          <i class="bi bi-house-door-fill me-2"></i>Return to Home
+        </a>
+        <a href="{{ url_for('student_bp.student') }}" class="btn btn-outline-primary">
+          <i class="bi bi-arrow-repeat me-2"></i>Record Another Attendance
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Create confetti effect
+  document.addEventListener('DOMContentLoaded', function() {
+    createConfetti();
+    startCountdown();
+  });
+  
+  function createConfetti() {
+    const colors = ['#198754', '#0dcaf0', '#0d6efd', '#ffc107', '#dc3545'];
+    const container = document.querySelector('body');
+    
+    for (let i = 0; i < 100; i++) {
+      const confetti = document.createElement('div');
+      confetti.className = 'confetti';
+      confetti.style.left = Math.random() * 100 + 'vw';
+      confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      confetti.style.width = Math.random() * 10 + 5 + 'px';
+      confetti.style.height = Math.random() * 10 + 5 + 'px';
+      confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+      confetti.style.animationDelay = Math.random() * 5 + 's';
+      
+      container.appendChild(confetti);
+      
+      // Remove confetti after animation completes
+      setTimeout(() => {
+        confetti.remove();
+      }, 8000);
+    }
+  }
+  
+  function startCountdown() {
+    let seconds = 10;
+    const countdownElement = document.getElementById('countdown');
+    
+    const interval = setInterval(() => {
+      seconds--;
+      countdownElement.textContent = seconds;
+      
+      if (seconds <= 0) {
+        clearInterval(interval);
+        window.location.href = "{{ url_for('home') }}";
+      }
+    }, 1000);
+  }
+</script>
+{% endblock %}

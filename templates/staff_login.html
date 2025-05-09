@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Staff Login{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-6 offset-md-3">
+    <h2 class="my-4 text-center fw-bold">Staff Login</h2>
+    <p class="text-center text-secondary mb-4">
+      Enter your staff credentials below to access the administrator panel.
+    </p>
+
+    <div class="card shadow">
+      <div class="card-body">
+        <form action="{{ url_for('staff_bp.do_staff_login') }}" method="post" class="needs-validation" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          
+          <div class="mb-3">
+            <label for="email" class="form-label fw-semibold">Email:</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
+              <input 
+                type="email" 
+                name="email" 
+                id="email" 
+                class="form-control" 
+                placeholder="admin@example.com"
+                required
+              >
+              <div class="invalid-feedback">Please provide a valid email.</div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="password" class="form-label fw-semibold">Password:</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-key-fill"></i></span>
+              <input 
+                type="password" 
+                name="password" 
+                id="password" 
+                class="form-control"
+                placeholder="••••••••"
+                required
+              >
+              <div class="invalid-feedback">Password is required.</div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end mb-3">
+            <a href="#" class="small text-muted">Forgot Password?</a>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-door-open-fill"></i> Login
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <p class="mt-3 text-center text-secondary small">
+      Unauthorized access is prohibited. Activity may be monitored.
+    </p>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function () {
+    'use strict'
+    const forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms)
+      .forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+          if (!form.checkValidity()) {
+            event.preventDefault()
+            event.stopPropagation()
+          }
+          form.classList.add('was-validated')
+        }, false)
+      })
+  })()
+</script>
+{% endblock %}

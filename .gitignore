@@ -1,0 +1,27 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Models & logs
+*.pkl
+*.log
+
+# Database files
+*.db
+
+# MacOS / Windows / Linux trash files
+*.DS_Store
+Thumbs.db
+
+# Environment file
+.env
+
+# Python virtual environment
+venv/
+
+# IDE/editor settings
+.idea/
+.vscode/
+
+# QR image auto-outputs
+static/qr_codes/
