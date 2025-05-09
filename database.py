@@ -7,7 +7,7 @@ from config import MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DB
 # For NASA-level usage, these might come from environment variables
 MYSQL_HOST = "localhost"
 MYSQL_USER = "root"
-MYSQL_PASSWORD = "Abdulbasit12."
+MYSQL_PASSWORD = "put_your_password"
 MYSQL_DB = "student_attendance"
 
 def create_database():
